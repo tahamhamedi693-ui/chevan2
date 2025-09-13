@@ -28,7 +28,7 @@ export default function BookingsScreen() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [fadeAnim] = useState(new Animated.Value(0));
   const { user, loading: authLoading } = useAuth();
-  const { rides, activeRide } = useRides();
+  const { rides, activeRide, cancelRide } = useRides();
 
   useEffect(() => {
     // Entrance animation
@@ -99,6 +99,29 @@ export default function BookingsScreen() {
   const handleTrackRide = (ride: Ride) => {
     setSelectedRide(ride);
     setShowTrackingModal(true);
+  };
+
+  const handleCancelRide = async (ride: Ride) => {
+    Alert.alert(
+      'Cancel Ride',
+      'Are you sure you want to cancel this ride?',
+      [
+        { text: 'Keep Ride', style: 'cancel' },
+        {
+          text: 'Cancel Ride',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelRide(ride.id);
+              setShowTrackingModal(false);
+              Alert.alert('Ride Cancelled', 'Your ride has been cancelled successfully.');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to cancel ride. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -261,7 +284,10 @@ export default function BookingsScreen() {
                     <TouchableOpacity style={styles.actionButton} onPress={() => handleTrackRide(ride)}>
                       <Text style={styles.actionButtonText}>Track</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionButton, styles.secondaryActionButton]}>
+                    <TouchableOpacity 
+                      style={[styles.actionButton, styles.secondaryActionButton]}
+                      onPress={() => handleCancelRide(ride)}
+                    >
                       <Text style={[styles.actionButtonText, styles.secondaryActionButtonText]}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
@@ -388,23 +414,7 @@ export default function BookingsScreen() {
           {selectedRide && (
             <RideTracker
               ride={selectedRide}
-              onCancel={() => {
-                Alert.alert(
-                  'Cancel Ride',
-                  'Are you sure you want to cancel this ride?',
-                  [
-                    { text: 'Keep Ride', style: 'cancel' },
-                    {
-                      text: 'Cancel Ride',
-                      style: 'destructive',
-                      onPress: () => {
-                        setShowTrackingModal(false);
-                        // Handle ride cancellation
-                      },
-                    },
-                  ]
-                );
-              }}
+              onCancel={() => handleCancelRide(selectedRide)}
               onContact={() => {
                 Alert.alert(
                   'Contact Driver',
