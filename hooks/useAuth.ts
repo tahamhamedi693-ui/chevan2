@@ -78,11 +78,9 @@ export function useAuth() {
 
     const { error } = await supabase.auth.signOut();
     
-    if (!error) {
-      // Clear local state
-      setSession(null);
-      setUser(null);
-    }
+    // Always clear local state, even if there's an error
+    setSession(null);
+    setUser(null);
     
     return { error };
   };

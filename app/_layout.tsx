@@ -25,14 +25,14 @@ export default function RootLayout() {
     if (loading || !isNavigationReady) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const inTabsGroup = segments[0] === '(tabs)';
-    const inDriverGroup = segments[0] === '(driver)';
 
     if (!user && !inAuthGroup) {
       // User is not authenticated and not in auth screens, redirect to login
+      console.log('No user detected, redirecting to login');
       router.replace('/(auth)/login');
     } else if (user && inAuthGroup) {
       // User is authenticated but still in auth screens, redirect to main app
+      console.log('User authenticated, redirecting to main app');
       router.replace('/(tabs)');
     }
   }, [user, loading, isNavigationReady, segments]);

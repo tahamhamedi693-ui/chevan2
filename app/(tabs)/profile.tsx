@@ -107,16 +107,13 @@ export default function ProfileScreen() {
               console.log('Starting logout process...');
               const { error } = await signOut();
               
-              if (error) {
-                console.error('Logout error:', error);
-                Alert.alert('Error', 'Failed to sign out: ' + error.message);
-              } else {
-                console.log('Logout successful, redirecting...');
-                // The _layout.tsx will handle the redirect automatically
-              }
+              console.log('Logout completed, forcing navigation...');
+              // Force immediate navigation to login
+              router.replace('/(auth)/login');
             } catch (error) {
               console.error('Logout exception:', error);
-              Alert.alert('Error', 'An unexpected error occurred during logout');
+              // Even if there's an error, force logout and redirect
+              router.replace('/(auth)/login');
             }
           },
         },
