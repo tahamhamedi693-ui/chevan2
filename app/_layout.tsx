@@ -23,8 +23,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (!loading && isNavigationReady) {
       if (user) {
-        router.replace('/(tabs)');
+        // Check if we're already on the correct route to avoid unnecessary navigation
+        const currentRoute = router.canGoBack() ? undefined : '/(tabs)';
+        if (currentRoute) {
+          router.replace('/(tabs)');
+        }
       } else {
+        // Always redirect to login if no user
         router.replace('/(auth)/login');
       }
     }

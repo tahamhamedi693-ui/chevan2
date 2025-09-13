@@ -57,9 +57,21 @@ export default function DriverProfile() {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
-            const { error } = await signOut();
-            if (error) {
-              Alert.alert('Error', 'Failed to sign out');
+            try {
+              console.log('Starting driver logout process...');
+              const { error } = await signOut();
+              
+              if (error) {
+                console.error('Driver logout error:', error);
+                Alert.alert('Error', 'Failed to sign out: ' + error.message);
+              } else {
+                console.log('Driver logout successful, redirecting...');
+                // Force navigation to login screen
+                router.replace('/(auth)/login');
+              }
+            } catch (error) {
+              console.error('Driver logout exception:', error);
+              Alert.alert('Error', 'An unexpected error occurred during logout');
             }
           },
         },
