@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, User, Phone, Mail, CreditCard, Car, FileText, Upload, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, User, Phone, Mail, CreditCard, Car, FileText, Upload, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
