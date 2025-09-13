@@ -1,5 +1,5 @@
 import React from 'react';
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { Platform } from 'react-native';
 
 interface StripeProviderWrapperProps {
   publishableKey: string;
@@ -7,6 +7,14 @@ interface StripeProviderWrapperProps {
 }
 
 export default function StripeProviderWrapper({ publishableKey, children }: StripeProviderWrapperProps) {
+  // Prevent importing Stripe on web platform
+  if (Platform.OS === 'web') {
+    return <>{children}</>;
+  }
+
+  // Dynamic import for native platforms only
+  const { StripeProvider } = require('@stripe/stripe-react-native');
+  
   return (
     <StripeProvider publishableKey={publishableKey}>
       {children}
