@@ -176,8 +176,6 @@ export default function HomeScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showScheduleRide, setShowScheduleRide] = useState(false);
   const [completedRide, setCompletedRide] = useState<any>(null);
-  const [nearbyDrivers, setNearbyDrivers] = useState<Array<{id: string; current_location: {latitude: number; longitude: number}}>>([]);
-  const [driversGenerated, setDriversGenerated] = useState(false);
   const { user } = useAuth();
   const {
     activeRide,
@@ -360,48 +358,6 @@ export default function HomeScreen() {
     );
   };
 
-  const generateNearbyDrivers = () => {
-    if (!currentCoords) return;
-    
-    const drivers: Array<{id: string; current_location: {latitude: number; longitude: number}}> = [];
-    // Generate 8-12 random drivers
-    const driverCount = Math.floor(Math.random() * 5) + 8;
-    
-    for (let i = 0; i < driverCount; i++) {
-      // Generate random position within ~1-2km of center
-      const jitterLat = (Math.random() - 0.5) * 0.02;
-      const jitterLng = (Math.random() - 0.5) * 0.02;
-      
-      drivers.push({
-        id: `driver-${i}`,
-        current_location: {
-          latitude: currentCoords.latitude + jitterLat,
-          longitude: currentCoords.longitude + jitterLng
-        }
-      });
-    }
-    
-    console.log(`Generated ${drivers.length} drivers`);
-    setNearbyDrivers(drivers);
-  };
-
-  useEffect(() => {
-    if (currentCoords && !driversGenerated) {
-      generateNearbyDrivers();
-      setDriversGenerated(true);
-    }
-  }, [currentCoords, driversGenerated]);
-
-  useEffect(() => {
-    if (!currentCoords) return;
-    
-    const interval = setInterval(() => {
-      generateNearbyDrivers();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [currentCoords]);
-
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
@@ -417,7 +373,6 @@ export default function HomeScreen() {
             } : undefined}
             showRoute={!!destinationCoords}
             showNearbyDrivers={true}
-            nearbyDrivers={nearbyDrivers.length > 0 ? nearbyDrivers : undefined}
           />
         </View>
         

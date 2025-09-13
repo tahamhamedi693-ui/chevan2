@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { rideService } from '@/lib/rideService';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { driversTable } from '@/lib/typedSupabase';
+import { Database } from '@/types/database';
+
+type Driver = Database['public']['Tables']['drivers']['Row'];
 
 // Add custom CSS for Uber-like styling
 const customMapStyle = `
@@ -135,7 +138,7 @@ interface MapViewProps {
   showRoute?: boolean;
   onMapPress?: (coords: { latitude: number; longitude: number }) => void;
   showNearbyDrivers?: boolean;
-  nearbyDrivers?: Array<{ id: string; current_location: { latitude: number; longitude: number } | null }>;
+  nearbyDrivers?: Driver[];
 }
 
 // Uber-style current location icon (blue dot with pulse)
@@ -284,11 +287,11 @@ const MapViewComponent: React.FC<MapViewProps> = ({
   showRoute = false,
   onMapPress,
   showNearbyDrivers = true,
-  nearbyDrivers: propNearbyDrivers,
+  nearbyDrivers,
 }: MapViewProps) => {
   const mapRef = useRef<any>(null);
   const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
-  const [nearbyDrivers, setNearbyDrivers] = useState<Array<{ id: string; current_location: { latitude: number; longitude: number } | null }>>([]);
+  const [fetchedDrivers, setFetchedDrivers] = useState<Driver[]>([]);
   const [driverMovement, setDriverMovement] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Default center (San Francisco)
@@ -297,30 +300,116 @@ const MapViewComponent: React.FC<MapViewProps> = ({
     ? [currentLocation.latitude, currentLocation.longitude]
     : defaultCenter;
 
-  // Fetch nearby drivers if not provided as props
+  // Calculate distance between two points using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const toRadians = (degrees: number): number => {
+    return degrees * (Math.PI/180);
+  };
+
+  // Fetch nearby drivers from database
   useEffect(() => {
     const fetchNearbyDrivers = async () => {
-      if (currentLocation && showNearbyDrivers && !propNearbyDrivers) {
-        console.log('Fetching nearby drivers from service');
-        const drivers = await rideService.getNearbyDrivers(
-          currentLocation.latitude,
-          currentLocation.longitude
-        );
-        console.log(`Got ${drivers.length} drivers from service`);
-        setNearbyDrivers(drivers);
-      } else if (propNearbyDrivers) {
-        console.log(`Using ${propNearbyDrivers.length} drivers from props`);
-        setNearbyDrivers(propNearbyDrivers);
+      if (currentLocation && showNearbyDrivers && !nearbyDrivers) {
+        try {
+          console.log('Fetching nearby drivers from database');
+          
+          // Fetch all active drivers
+          const { data: allDrivers, error } = await driversTable()
+            .select('*')
+            .eq('status', 'active')
+            .eq('documents_verified', true);
+
+          if (error) {
+            console.error('Error fetching drivers:', error);
+            return;
+          }
+
+          if (!allDrivers || allDrivers.length === 0) {
+            console.log('No active drivers found in database');
+            return;
+          }
+
+          // Filter drivers within 10km radius and add mock locations if needed
+          const nearbyDriversWithLocation = allDrivers
+            .map(driver => {
+              // If driver doesn't have location, generate one nearby
+              if (!driver.current_location) {
+                const jitterLat = (Math.random() - 0.5) * 0.02; // ~1km radius
+                const jitterLng = (Math.random() - 0.5) * 0.02;
+                
+                return {
+                  ...driver,
+                  current_location: {
+                    latitude: currentLocation.latitude + jitterLat,
+                    longitude: currentLocation.longitude + jitterLng
+                  }
+                };
+              }
+              return driver;
+            })
+            .filter(driver => {
+              if (!driver.current_location) return false;
+              
+              const distance = calculateDistance(
+                currentLocation.latitude,
+                currentLocation.longitude,
+                driver.current_location.latitude,
+                driver.current_location.longitude
+              );
+              
+              return distance <= 10; // Within 10km
+            })
+            .sort((a, b) => {
+              // Sort by distance, then by rating
+              const distanceA = calculateDistance(
+                currentLocation.latitude,
+                currentLocation.longitude,
+                a.current_location!.latitude,
+                a.current_location!.longitude
+              );
+              const distanceB = calculateDistance(
+                currentLocation.latitude,
+                currentLocation.longitude,
+                b.current_location!.latitude,
+                b.current_location!.longitude
+              );
+              
+              if (distanceA !== distanceB) {
+                return distanceA - distanceB;
+              }
+              
+              return (b.rating || 0) - (a.rating || 0);
+            });
+
+          console.log(`Found ${nearbyDriversWithLocation.length} nearby drivers`);
+          setFetchedDrivers(nearbyDriversWithLocation);
+          
+        } catch (error) {
+          console.error('Error fetching nearby drivers:', error);
+        }
       }
     };
 
     fetchNearbyDrivers();
-    const interval = !propNearbyDrivers ? setInterval(fetchNearbyDrivers, 15000) : null;
+    
+    // Refresh drivers every 30 seconds if not provided as props
+    const interval = !nearbyDrivers ? setInterval(fetchNearbyDrivers, 30000) : null;
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [currentLocation, showNearbyDrivers, propNearbyDrivers]);
+  }, [currentLocation, showNearbyDrivers, nearbyDrivers]);
 
   // Simulate driver movement for active rides
   useEffect(() => {
@@ -440,29 +529,49 @@ const MapViewComponent: React.FC<MapViewProps> = ({
         
         <MapEvents />
 
-        {/* Nearby drivers */}
-        {showNearbyDrivers && nearbyDrivers && nearbyDrivers.length > 0 && (
-          <>
-            {nearbyDrivers.map((driver, index) => (
-              driver.current_location && (
-                <Marker
-                  key={driver.id}
-                  position={[driver.current_location.latitude, driver.current_location.longitude]}
-                  icon={createNearbyCarIcon(carColors[index % carColors.length], true)}
-                >
-                  <Popup>
-                    <div style={{ textAlign: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                      <h3 style={{ margin: '0 0 8px 0', color: '#1a1a1a', fontSize: '16px', fontWeight: '600' }}>Available Driver</h3>
-                      <p style={{ margin: '0', fontSize: '14px', color: '#666' }}>
-                        {Math.ceil(Math.random() * 5 + 1)} min away
-                      </p>
-                    </div>
-                  </Popup>
-                </Marker>
-              )
-            ))}
-          </>
-        )}
+        {/* Use either provided drivers or fetched drivers */}
+        {(() => {
+          const driversToShow = nearbyDrivers || fetchedDrivers;
+          
+          return showNearbyDrivers && driversToShow && driversToShow.length > 0 && (
+            <>
+              {driversToShow.map((driver, index) => (
+                driver.current_location && (
+                  <Marker
+                    key={driver.id}
+                    position={[driver.current_location.latitude, driver.current_location.longitude]}
+                    icon={createNearbyCarIcon(carColors[index % carColors.length], true)}
+                  >
+                    <Popup>
+                      <div style={{ textAlign: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                        <h3 style={{ margin: '0 0 8px 0', color: '#1a1a1a', fontSize: '16px', fontWeight: '600' }}>
+                          {driver.name}
+                        </h3>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>
+                          {driver.vehicle_type} • {driver.license_plate}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginBottom: '4px' }}>
+                          <span style={{ color: '#FFD700', fontSize: '14px' }}>★</span>
+                          <span style={{ fontSize: '12px', color: '#666' }}>{driver.rating?.toFixed(1) || '5.0'}</span>
+                        </div>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>
+                          {Math.ceil(
+                            calculateDistance(
+                              currentLocation!.latitude,
+                              currentLocation!.longitude,
+                              driver.current_location.latitude,
+                              driver.current_location.longitude
+                            ) * 2
+                          )} min away
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )
+              ))}
+            </>
+          );
+        })()}
 
         {/* Current Location with accuracy circle */}
         {currentLocation && (
