@@ -11,21 +11,7 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  Car, 
-  DollarSign, 
-  Clock, 
-  MapPin, 
-  Star, 
-  Navigation, 
-  Phone, 
-  MessageCircle,
-  Settings,
-  BarChart3,
-  User,
-  Zap,
-  Shield
-} from 'lucide-react-native';
+import { Car, DollarSign, Clock, MapPin, Star, Navigation, Phone, MessageCircle, Settings, ChartBar as BarChart3, User, Zap, Shield } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/hooks/useAuth';
 import MapView from '@/components/MapView';
