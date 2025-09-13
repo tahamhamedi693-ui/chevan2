@@ -41,7 +41,9 @@
     },
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://your-project-url.supabase.co",
-      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "your-anon-key"
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "your-anon-key",
+      "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_your_stripe_publishable_key_here",
+      "EXPO_PUBLIC_API_URL": "https://your-api-url.com"
     }
   }
 }
