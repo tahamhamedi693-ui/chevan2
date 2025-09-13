@@ -157,8 +157,14 @@ export default function SavedAddressesScreen() {
             try {
               const { error } = await savedAddressesTable()
                 .delete()
-                .eq('id', address.id);
+                .eq('id', address.id)
+                .eq('user_id', user!.id);
+              
               if (error) throw error;
+              
+              // Update local state immediately for better UX
+              setAddresses(prev => prev.filter(addr => addr.id !== address.id));
+              
               loadSavedAddresses();
               Alert.alert('Success', 'Address deleted successfully');
             } catch (error) {
