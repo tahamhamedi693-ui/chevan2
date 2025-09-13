@@ -95,8 +95,7 @@ export default function BookingsScreen() {
   };
 
   const handleTrackRide = (ride: Ride) => {
-    setSelectedRide(ride);
-    setShowDetails(true);
+    Alert.alert('Track Ride', 'Tracking functionality would be implemented here');
   };
 
   const formatDate = (dateString: string) => {
