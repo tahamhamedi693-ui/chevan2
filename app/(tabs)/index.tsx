@@ -407,7 +407,7 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <SafeAreaView style={styles.container}>
         {/* Full-screen Map Container */}
-        <Animated.View style={[styles.mapContainer, { opacity: fadeAnim }]}>
+        <View style={styles.mapContainer}>
           <MapView
             currentLocation={currentCoords || undefined}
             destination={destinationCoords || undefined}
@@ -419,13 +419,7 @@ export default function HomeScreen() {
             showNearbyDrivers={true}
             nearbyDrivers={nearbyDrivers.length > 0 ? nearbyDrivers : undefined}
           />
-          {/* Gradient Overlay for better visibility */}
-          <LinearGradient
-            colors={['rgba(0,0,0,0.3)', 'transparent', 'transparent', 'rgba(0,0,0,0.2)']}
-            style={styles.mapGradientOverlay}
-            pointerEvents="none"
-          />
-        </Animated.View>
+        </View>
         
         {/* Modern Floating Header */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
@@ -465,11 +459,11 @@ export default function HomeScreen() {
           </BlurView>
         </Animated.View>
 
-        {/* Modern Bottom Sheet */}
-        <Animated.View style={[styles.bottomSheet, { opacity: fadeAnim }]}>
+        {/* Floating Bottom Panel */}
+        <Animated.View style={[styles.floatingPanel, { opacity: fadeAnim }]}>
           <View style={styles.handle} />
           
-          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.panelContent}>
             {/* Modern Location Inputs */}
             <View style={styles.locationInputs}>
               <TouchableOpacity
@@ -524,7 +518,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Modern Quick Actions */}
+            {/* Quick Actions - Always Visible */}
             <View style={styles.quickActions}>
               <TouchableOpacity 
                 style={styles.quickActionItem}
@@ -559,53 +553,21 @@ export default function HomeScreen() {
                 <Text style={styles.quickActionText}>Safety</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Modern Recent Section */}
-            <View style={styles.recentSection}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Recent destinations</Text>
-                <TouchableOpacity>
-                  <Text style={styles.sectionLink}>See all</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.recentList}>
-                <TouchableOpacity style={styles.recentItem}>
-                  <LinearGradient
-                    colors={['#F3F4F6', '#E5E7EB'] as any}
-                    style={styles.recentIcon}
-                  >
-                    <Clock size={18} color={Colors.textSecondary} />
-                  </LinearGradient>
-                  <View style={styles.recentContent}>
-                    <Text style={styles.recentTitle}>Airport Terminal 1</Text>
-                    <Text style={styles.recentSubtitle}>International Airport</Text>
-                  </View>
-                  <View style={styles.recentRight}>
-                    <Text style={styles.recentTime}>2h ago</Text>
-                    <Navigation size={16} color={Colors.textTertiary} />
-                  </View>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.recentItem}>
-                  <LinearGradient
-                    colors={['#F3F4F6', '#E5E7EB'] as any}
-                    style={styles.recentIcon}
-                  >
-                    <MapPin size={18} color={Colors.textSecondary} />
-                  </LinearGradient>
-                  <View style={styles.recentContent}>
-                    <Text style={styles.recentTitle}>Downtown Mall</Text>
-                    <Text style={styles.recentSubtitle}>Shopping Center</Text>
-                  </View>
-                  <View style={styles.recentRight}>
-                    <Text style={styles.recentTime}>1d ago</Text>
-                    <Navigation size={16} color={Colors.textTertiary} />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
+          </View>
         </Animated.View>
+
+        {/* Expandable Recent Destinations */}
+        <TouchableOpacity 
+          style={styles.recentButton}
+          onPress={() => {
+            // Could expand to show recent destinations
+            Alert.alert('Recent Destinations', 'Feature coming soon!');
+          }}
+        >
+          <Clock size={16} color={Colors.textSecondary} />
+          <Text style={styles.recentButtonText}>Recent destinations</Text>
+          <Navigation size={16} color={Colors.textTertiary} />
+        </TouchableOpacity>
       </SafeAreaView>
 
       {/* Active Ride Tracker Modal */}
@@ -937,27 +899,18 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
-    position: 'relative',
   },
-  mapGradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-  },
-  bottomSheet: {
+  floatingPanel: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: BorderRadius['2xl'],
     borderTopRightRadius: BorderRadius['2xl'],
-    maxHeight: height * 0.45,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     zIndex: 10,
     ...Shadows['2xl'],
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20, // Account for safe area
   },
   handle: {
     width: 48,
@@ -966,10 +919,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     alignSelf: 'center',
     marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
-  scrollContainer: {
-    flex: 1,
+  panelContent: {
+    paddingBottom: Spacing.lg,
   },
   locationInputs: {
     paddingHorizontal: Spacing['2xl'],
@@ -1044,7 +997,7 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     paddingHorizontal: Spacing['2xl'],
-    marginBottom: Spacing['3xl'],
+    marginBottom: Spacing.lg,
     justifyContent: 'space-between',
   },
   quickActionItem: {
@@ -1065,66 +1018,29 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: '600',
   },
-  recentSection: {
-    paddingHorizontal: Spacing['2xl'],
-    marginBottom: Spacing['3xl'],
-  },
-  sectionHeader: {
+  recentButton: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: Typography.letterSpacing.tight,
-  },
-  sectionLink: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  recentList: {
-    gap: Spacing.md,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.xl,
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     ...Shadows.sm,
+    position: 'absolute',
+    bottom: 120, // Above the floating panel
+    left: 0,
+    right: 0,
+    zIndex: 5,
   },
-  recentIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  recentContent: {
+  recentButtonText: {
     flex: 1,
-  },
-  recentTitle: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  recentSubtitle: {
+    marginLeft: Spacing.sm,
     fontSize: Typography.fontSize.sm,
+    fontWeight: '500',
     color: Colors.textSecondary,
-  },
-  recentRight: {
-    alignItems: 'flex-end',
-    gap: Spacing.xs,
-  },
-  recentTime: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textTertiary,
   },
   // Modal styles
   modalContainer: {
