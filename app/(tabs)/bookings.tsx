@@ -258,7 +258,7 @@ export default function BookingsScreen() {
                   <View style={styles.rideActions}>
                     <TouchableOpacity style={styles.actionButton}>
                       <Text style={styles.actionButtonText}>Track</Text>
-                     onPress={() => handleTrackRide(ride)}
+                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionButton, styles.secondaryActionButton]}>
                       <Text style={[styles.actionButtonText, styles.secondaryActionButtonText]}>Cancel</Text>
                     </TouchableOpacity>
