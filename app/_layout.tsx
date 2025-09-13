@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '@/hooks/useAuth';
-import { router, useNavigationContainerRef } from 'expo-router';
+import { router, useNavigationContainerRef, useSegments } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useState } from 'react';
 
@@ -11,6 +11,7 @@ export default function RootLayout() {
   const { user, loading } = useAuth();
   const [isNavigationReady, setIsNavigationReady] = useState(false);
   const navigationRef = useNavigationContainerRef();
+  const segments = useSegments();
 
   useEffect(() => {
     const unsubscribe = navigationRef.addListener('state', () => {
@@ -21,19 +22,20 @@ export default function RootLayout() {
   }, [navigationRef]);
 
   useEffect(() => {
-    if (!loading && isNavigationReady) {
-      if (user) {
-        // Check if we're already on the correct route to avoid unnecessary navigation
-        const currentRoute = router.canGoBack() ? undefined : '/(tabs)';
-        if (currentRoute) {
-          router.replace('/(tabs)');
-        }
-      } else {
-        // Always redirect to login if no user
-        router.replace('/(auth)/login');
-      }
+    if (loading || !isNavigationReady) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
+    const inDriverGroup = segments[0] === '(driver)';
+
+    if (!user && !inAuthGroup) {
+      // User is not authenticated and not in auth screens, redirect to login
+      router.replace('/(auth)/login');
+    } else if (user && inAuthGroup) {
+      // User is authenticated but still in auth screens, redirect to main app
+      router.replace('/(tabs)');
     }
-  }, [user, loading, isNavigationReady]);
+  }, [user, loading, isNavigationReady, segments]);
 
   if (loading) {
     return null;

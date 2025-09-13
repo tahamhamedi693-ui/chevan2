@@ -66,8 +66,7 @@ export default function DriverProfile() {
                 Alert.alert('Error', 'Failed to sign out: ' + error.message);
               } else {
                 console.log('Driver logout successful, redirecting...');
-                // Force navigation to login screen
-                router.replace('/(auth)/login');
+                // The _layout.tsx will handle the redirect automatically
               }
             } catch (error) {
               console.error('Driver logout exception:', error);

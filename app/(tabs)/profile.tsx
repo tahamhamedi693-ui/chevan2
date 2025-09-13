@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, CreditCard, MapPin, Bell, Shield, CircleHelp as HelpCircle, Settings, LogOut, ChevronRight, Star, Gift, Users, CreditCard as Edit } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/database';
@@ -111,8 +112,7 @@ export default function ProfileScreen() {
                 Alert.alert('Error', 'Failed to sign out: ' + error.message);
               } else {
                 console.log('Logout successful, redirecting...');
-                // Force navigation to login screen
-                router.replace('/(auth)/login');
+                // The _layout.tsx will handle the redirect automatically
               }
             } catch (error) {
               console.error('Logout exception:', error);
