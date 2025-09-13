@@ -27,7 +27,7 @@ export default function RootLayout() {
       return;
     }
 
-    console.log('Auth state changed:', { hasUser: !!user, segments });
+    console.log('Auth state changed:', { hasUser: !!user, userEmail: user?.email, segments });
     
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -35,7 +35,7 @@ export default function RootLayout() {
       console.log('No user, redirecting to login');
       router.replace('/(auth)/login');
     } else if (user && inAuthGroup) {
-      console.log('User authenticated, redirecting to main app');
+      console.log('User authenticated, redirecting to main app:', user.email);
       router.replace('/(tabs)');
     }
   }, [user, loading, segments]);

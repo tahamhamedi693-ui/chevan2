@@ -34,13 +34,43 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured()) {
-      throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
+      // For demo purposes, allow mock login when Supabase isn't configured
+      console.log('Supabase not configured, using mock authentication');
+      
+      // Mock test accounts
+      const testAccounts = {
+        'test@passenger.com': 'password123',
+        'test@driver.com': 'password123',
+        'admin@rideshare.com': 'admin123'
+      };
+      
+      if (testAccounts[email as keyof typeof testAccounts] === password) {
+        // Create mock user
+        const mockUser = {
+          id: email === 'test@driver.com' ? 'driver-user-id' : 
+              email === 'admin@rideshare.com' ? 'admin-user-id' : 'passenger-user-id',
+          email,
+          user_metadata: {
+            full_name: email === 'test@driver.com' ? 'John Driver' :
+                      email === 'admin@rideshare.com' ? 'Admin User' : 'John Passenger'
+          }
+        };
+        
+        setUser(mockUser as any);
+        setSession({ user: mockUser } as any);
+        
+        return { data: { user: mockUser }, error: null };
+      } else {
+        return { data: null, error: { message: 'Invalid login credentials' } };
+      }
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    console.log('Supabase login result:', { data: !!data, error: !!error });
     return { data, error };
   };
 

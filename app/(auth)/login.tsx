@@ -50,14 +50,21 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const { error } = await signIn(email, password);
-    setLoading(false);
-
-    if (error) {
-      Alert.alert('Login Failed', error.message);
-    } else {
-      router.replace('/(tabs)');
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        console.error('Login error:', error);
+        Alert.alert('Login Failed', error.message);
+      } else {
+        console.log('Login successful, redirecting...');
+        router.replace('/(tabs)');
+      }
+    } catch (error) {
+      console.error('Login exception:', error);
+      Alert.alert('Login Failed', 'An unexpected error occurred');
     }
+    setLoading(false);
   };
 
   return (
