@@ -160,6 +160,14 @@ export default function ProfileScreen() {
 
   const menuItems: ProfileSetting[] = [
     {
+      id: 'driver',
+      icon: Car,
+      label: 'Become a Driver',
+      value: 'Earn money driving',
+      onPress: () => router.push('/(driver)/apply'),
+      color: '#10B981',
+    },
+    {
       id: 'referral',
       icon: Gift,
       label: 'Invite Friends',

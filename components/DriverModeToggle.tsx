@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Car, User, ArrowRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useRouter } from 'expo-router';
+import { router } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 interface DriverModeToggleProps {
   currentMode: 'passenger' | 'driver';
@@ -10,23 +12,80 @@ interface DriverModeToggleProps {
 }
 
 export default function DriverModeToggle({ currentMode, onModeChange }: DriverModeToggleProps) {
-  const routerInstance = useRouter();
+  const { user } = useAuth();
+  const [driverStatus, setDriverStatus] = useState<string>('none');
+
+  useEffect(() => {
+    checkDriverStatus();
+  }, [user]);
+
+  const checkDriverStatus = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('driver_status')
+        .eq('user_id', user.id)
+        .single();
+      
+      setDriverStatus(profile?.driver_status || 'none');
+    } catch (error) {
+      console.error('Error checking driver status:', error);
+    }
+  };
 
   const handleSwitchToDriver = () => {
-    Alert.alert(
-      'Switch to Driver Mode',
-      'You will be redirected to the driver dashboard. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Continue',
-          onPress: () => {
-            onModeChange('driver');
-            routerInstance.push('/(driver)/dashboard');
-          },
-        },
-      ]
-    );
+    switch (driverStatus) {
+      case 'none':
+        Alert.alert(
+          'Become a Driver',
+          'You need to apply to become a driver first. Would you like to start the application process?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Apply Now',
+              onPress: () => router.push('/(driver)/apply'),
+            },
+          ]
+        );
+        break;
+      case 'applied':
+        Alert.alert(
+          'Application Pending',
+          'Your driver application is being reviewed. Check your application status?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Check Status',
+              onPress: () => router.push('/(driver)/application-status'),
+            },
+          ]
+        );
+        break;
+      case 'approved':
+      case 'active':
+        Alert.alert(
+          'Switch to Driver Mode',
+          'You will be redirected to the driver dashboard. Continue?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Continue',
+              onPress: () => {
+                onModeChange('driver');
+                router.push('/(driver)/dashboard');
+              },
+            },
+          ]
+        );
+        break;
+      case 'suspended':
+        Alert.alert('Account Suspended', 'Your driver account has been suspended. Please contact support.');
+        break;
+      default:
+        Alert.alert('Error', 'Unable to determine driver status. Please try again.');
+    }
   };
 
   const handleSwitchToPassenger = () => {
@@ -39,7 +98,7 @@ export default function DriverModeToggle({ currentMode, onModeChange }: DriverMo
           text: 'Continue',
           onPress: () => {
             onModeChange('passenger');
-            routerInstance.push('/(tabs)');
+            router.push('/(tabs)');
           },
         },
       ]
