@@ -5,9 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { router, useNavigationContainerRef } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useState } from 'react';
-import StripeProviderWrapper from '@/components/StripeProviderWrapper';
-
-const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key_here';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -37,7 +34,7 @@ export default function RootLayout() {
     return null;
   }
 
-  const AppContent = () => (
+  return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
@@ -46,11 +43,5 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="auto" />
     </>
-  );
-
-  return (
-    <StripeProviderWrapper publishableKey={STRIPE_PUBLISHABLE_KEY}>
-      <AppContent />
-    </StripeProviderWrapper>
   );
 }

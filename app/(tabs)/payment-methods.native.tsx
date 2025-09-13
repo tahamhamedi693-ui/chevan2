@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditCard, Plus, Check, X, ChevronRight, Lock } from 'lucide-react-native';
 import { useStripe } from '@stripe/stripe-react-native';
 import { useAuth } from '@/hooks/useAuth';
+import StripeProviderWrapper from '@/components/StripeProviderWrapper';
 import { paymentMethodsTable } from '@/lib/typedSupabase';
 import { Database } from '@/types/database';
 
@@ -293,179 +294,181 @@ export default function PaymentMethodsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-        <Text style={styles.title}>Payment Methods</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
-        >
-          <Plus size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      </Animated.View>
+    <StripeProviderWrapper>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <Text style={styles.title}>Payment Methods</Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+          >
+            <Plus size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Animated.View>
 
-      <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
-        <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          {paymentMethods.length === 0 ? (
-            <View style={styles.emptyState}>
-              <CreditCard size={48} color="#E5E7EB" />
-              <Text style={styles.emptyStateTitle}>No credit cards</Text>
-              <Text style={styles.emptyStateText}>
-                Add a credit card to book rides
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyStateButton}
-                onPress={() => setShowAddModal(true)}
-              >
-                <Text style={styles.emptyStateButtonText}>Add Credit Card</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.paymentList}>
-              {paymentMethods.map((method) => {
-                return (
-                  <TouchableOpacity
-                    key={method.id}
-                    style={[
-                      styles.paymentCard,
-                      method.is_default && styles.defaultPaymentCard,
-                    ]}
-                    onPress={() => !method.is_default && handleSetDefault(method)}
-                  >
-                    <View style={[styles.paymentIcon, { backgroundColor: method.is_default ? '#DBEAFE' : '#F3F4F6' }]}>
-                      <CreditCard size={20} color={method.is_default ? 'black' : '#6B7280'} />
-                    </View>
-                    <View style={styles.paymentContent}>
-                      <Text style={styles.paymentLabel}>
-                        {getPaymentMethodDisplay(method)}
-                      </Text>
-                      {method.is_default && (
-                        <Text style={styles.defaultLabel}>Default</Text>
-                      )}
-                    </View>
-                    <View style={styles.paymentActions}>
-                      {method.is_default ? (
-                        <View style={styles.checkIcon}>
-                          <Check size={16} color="black" />
-                        </View>
-                      ) : (
-                        <ChevronRight size={16} color="#9CA3AF" />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </ScrollView>
-      </Animated.View>
-
-      {/* Add Credit Card Modal */}
-      <Modal
-        visible={showAddModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowAddModal(false)}
-            >
-              <X size={24} color="#6B7280" />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Add Credit Card</Text>
-            <View style={styles.placeholder} />
-          </View>
-
-          <View style={styles.modalContent}>
-            <Text style={styles.sectionTitle}>Enter card details</Text>
-            
-            <View style={styles.formContainer}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Card Number</Text>
-                <TextInput
-                  style={styles.cardInput}
-                  placeholder="1234 5678 9012 3456"
-                  value={cardForm.cardNumber}
-                  onChangeText={(text) => setCardForm({
-                    ...cardForm,
-                    cardNumber: formatCardNumber(text)
-                  })}
-                  keyboardType="numeric"
-                  maxLength={19}
-                />
+        <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+            {paymentMethods.length === 0 ? (
+              <View style={styles.emptyState}>
+                <CreditCard size={48} color="#E5E7EB" />
+                <Text style={styles.emptyStateTitle}>No credit cards</Text>
+                <Text style={styles.emptyStateText}>
+                  Add a credit card to book rides
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyStateButton}
+                  onPress={() => setShowAddModal(true)}
+                >
+                  <Text style={styles.emptyStateButtonText}>Add Credit Card</Text>
+                </TouchableOpacity>
               </View>
+            ) : (
+              <View style={styles.paymentList}>
+                {paymentMethods.map((method) => {
+                  return (
+                    <TouchableOpacity
+                      key={method.id}
+                      style={[
+                        styles.paymentCard,
+                        method.is_default && styles.defaultPaymentCard,
+                      ]}
+                      onPress={() => !method.is_default && handleSetDefault(method)}
+                    >
+                      <View style={[styles.paymentIcon, { backgroundColor: method.is_default ? '#DBEAFE' : '#F3F4F6' }]}>
+                        <CreditCard size={20} color={method.is_default ? 'black' : '#6B7280'} />
+                      </View>
+                      <View style={styles.paymentContent}>
+                        <Text style={styles.paymentLabel}>
+                          {getPaymentMethodDisplay(method)}
+                        </Text>
+                        {method.is_default && (
+                          <Text style={styles.defaultLabel}>Default</Text>
+                        )}
+                      </View>
+                      <View style={styles.paymentActions}>
+                        {method.is_default ? (
+                          <View style={styles.checkIcon}>
+                            <Check size={16} color="black" />
+                          </View>
+                        ) : (
+                          <ChevronRight size={16} color="#9CA3AF" />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </ScrollView>
+        </Animated.View>
+
+        {/* Add Credit Card Modal */}
+        <Modal
+          visible={showAddModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowAddModal(false)}
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Add Credit Card</Text>
+              <View style={styles.placeholder} />
+            </View>
+
+            <View style={styles.modalContent}>
+              <Text style={styles.sectionTitle}>Enter card details</Text>
               
-              <View style={styles.rowInputs}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>Expiry Date</Text>
+              <View style={styles.formContainer}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Card Number</Text>
                   <TextInput
                     style={styles.cardInput}
-                    placeholder="MM/YY"
-                    value={cardForm.expiryDate}
+                    placeholder="1234 5678 9012 3456"
+                    value={cardForm.cardNumber}
                     onChangeText={(text) => setCardForm({
                       ...cardForm,
-                      expiryDate: formatExpiryDate(text)
+                      cardNumber: formatCardNumber(text)
                     })}
                     keyboardType="numeric"
-                    maxLength={5}
+                    maxLength={19}
                   />
                 </View>
                 
-                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.inputLabel}>CVV</Text>
+                <View style={styles.rowInputs}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.inputLabel}>Expiry Date</Text>
+                    <TextInput
+                      style={styles.cardInput}
+                      placeholder="MM/YY"
+                      value={cardForm.expiryDate}
+                      onChangeText={(text) => setCardForm({
+                        ...cardForm,
+                        expiryDate: formatExpiryDate(text)
+                      })}
+                      keyboardType="numeric"
+                      maxLength={5}
+                    />
+                  </View>
+                  
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                    <Text style={styles.inputLabel}>CVV</Text>
+                    <TextInput
+                      style={styles.cardInput}
+                      placeholder="123"
+                      value={cardForm.cvv}
+                      onChangeText={(text) => setCardForm({
+                        ...cardForm,
+                        cvv: text.replace(/[^0-9]/g, '')
+                      })}
+                      keyboardType="numeric"
+                      maxLength={4}
+                      secureTextEntry
+                    />
+                  </View>
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Cardholder Name</Text>
                   <TextInput
                     style={styles.cardInput}
-                    placeholder="123"
-                    value={cardForm.cvv}
+                    placeholder="John Doe"
+                    value={cardForm.cardholderName}
                     onChangeText={(text) => setCardForm({
                       ...cardForm,
-                      cvv: text.replace(/[^0-9]/g, '')
+                      cardholderName: text
                     })}
-                    keyboardType="numeric"
-                    maxLength={4}
-                    secureTextEntry
+                    autoCapitalize="words"
                   />
                 </View>
+                
+                <View style={styles.securityNote}>
+                  <Lock size={16} color="#6B7280" />
+                  <Text style={styles.securityText}>
+                    Your card information is encrypted and secure
+                  </Text>
+                </View>
+                
+                <TouchableOpacity
+                  style={[styles.addCardButton, isProcessing && styles.addCardButtonDisabled]}
+                  onPress={handleAddCreditCard}
+                  disabled={isProcessing}
+                >
+                  <Text style={styles.addCardButtonText}>
+                    {isProcessing ? 'Adding Card...' : 'Add Card'}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Cardholder Name</Text>
-                <TextInput
-                  style={styles.cardInput}
-                  placeholder="John Doe"
-                  value={cardForm.cardholderName}
-                  onChangeText={(text) => setCardForm({
-                    ...cardForm,
-                    cardholderName: text
-                  })}
-                  autoCapitalize="words"
-                />
-              </View>
-              
-              <View style={styles.securityNote}>
-                <Lock size={16} color="#6B7280" />
-                <Text style={styles.securityText}>
-                  Your card information is encrypted and secure
-                </Text>
-              </View>
-              
-              <TouchableOpacity
-                style={[styles.addCardButton, isProcessing && styles.addCardButtonDisabled]}
-                onPress={handleAddCreditCard}
-                disabled={isProcessing}
-              >
-                <Text style={styles.addCardButtonText}>
-                  {isProcessing ? 'Adding Card...' : 'Add Card'}
-                </Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </StripeProviderWrapper>
   );
 }
 
