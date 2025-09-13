@@ -58,15 +58,12 @@ export default function DriverProfile() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Starting driver logout process...');
-              const { error } = await signOut();
-              
-              console.log('Driver logout completed, forcing navigation...');
-              // Force immediate navigation to login
+              console.log('Driver logout initiated');
+              await signOut();
+              console.log('Driver logout completed');
               router.replace('/(auth)/login');
             } catch (error) {
-              console.error('Driver logout exception:', error);
-              // Even if there's an error, force logout and redirect
+              console.error('Driver logout error:', error);
               router.replace('/(auth)/login');
             }
           },
