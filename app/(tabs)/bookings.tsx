@@ -113,7 +113,6 @@ export default function BookingsScreen() {
           onPress: async () => {
             try {
               await cancelRide(ride.id);
-              setShowTrackingModal(false);
               Alert.alert('Ride Cancelled', 'Your ride has been cancelled successfully.');
             } catch (error) {
               Alert.alert('Error', 'Failed to cancel ride. Please try again.');
@@ -414,7 +413,10 @@ export default function BookingsScreen() {
           {selectedRide && (
             <RideTracker
               ride={selectedRide}
-              onCancel={() => handleCancelRide(selectedRide)}
+              onCancel={() => {
+                handleCancelRide(selectedRide);
+                setShowTrackingModal(false);
+              }}
               onContact={() => {
                 Alert.alert(
                   'Contact Driver',
