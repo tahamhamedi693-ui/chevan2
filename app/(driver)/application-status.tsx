@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Clock, CheckCircle, XCircle, FileText, Upload, Eye } from 'lucide-react-native';
+import { ArrowLeft, Clock, CircleCheck as CheckCircle, Circle as XCircle, FileText, Upload, Eye } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
