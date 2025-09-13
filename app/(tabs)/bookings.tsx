@@ -84,7 +84,7 @@ export default function BookingsScreen() {
     };
     
     loadUserRides();
-    }
+  }, [user, authLoading, loadRides]);
     
     // Entrance animation
     Animated.timing(fadeAnim, {
