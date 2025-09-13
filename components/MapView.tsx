@@ -8,14 +8,14 @@ import 'leaflet/dist/leaflet.css';
 // Add custom CSS for Uber-like styling
 const customMapStyle = `
   .leaflet-container {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
   .leaflet-popup-content-wrapper {
     border-radius: 12px;
     padding: 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: none;
     background: white;
   }
@@ -25,6 +25,7 @@ const customMapStyle = `
     min-width: 200px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.4;
+    color: #1a1a1a;
   }
   
   .leaflet-popup-tip {
@@ -35,13 +36,14 @@ const customMapStyle = `
   .leaflet-control-zoom {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     border: none;
+    background: white;
   }
   
   .leaflet-control-zoom a {
     background-color: white;
-    color: #1a1a1a;
+    color: #000000;
     font-weight: 600;
     font-size: 18px;
     border: none;
@@ -49,19 +51,25 @@ const customMapStyle = `
     height: 44px;
     line-height: 44px;
     transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
   }
   
+  .leaflet-control-zoom a:last-child {
+    border-bottom: none;
+  }
+
   .leaflet-control-zoom a:hover {
-    background-color: #f5f5f5;
+    background-color: #f8f8f8;
     color: #000;
   }
   
   .leaflet-control-attribution {
-    background-color: rgba(255, 255, 255, 0.8) !important;
-    color: #666 !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #999 !important;
     font-size: 10px !important;
-    border-radius: 4px;
-    padding: 2px 6px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   }
   
   /* Hide default markers */
@@ -72,18 +80,18 @@ const customMapStyle = `
   /* Pulse animation for current location */
   @keyframes pulse {
     0% {
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+      box-shadow: 0 0 0 0 rgba(24, 119, 242, 0.6);
     }
     70% {
-      box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+      box-shadow: 0 0 0 15px rgba(24, 119, 242, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+      box-shadow: 0 0 0 0 rgba(24, 119, 242, 0);
     }
   }
   
   .current-location-pulse {
-    animation: pulse 2s infinite;
+    animation: pulse 1.5s infinite;
   }
   
   /* Car rotation animation */
@@ -95,6 +103,11 @@ const customMapStyle = `
   
   .car-moving {
     animation: carMove 3s ease-in-out infinite;
+  }
+
+  /* Uber-style road styling */
+  .leaflet-tile-pane {
+    filter: brightness(1.05) contrast(0.95) saturate(0.9);
   }
 `;
 
@@ -130,12 +143,12 @@ const currentLocationIcon = new L.DivIcon({
   className: 'custom-div-icon',
   html: `
     <div class="current-location-pulse" style="
-      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-      width: 20px;
-      height: 20px;
+      background: linear-gradient(135deg, #1877F2, #0866FF);
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      border: 4px solid white;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(24, 119, 242, 0.25);
       position: relative;
     ">
       <div style="
@@ -143,15 +156,15 @@ const currentLocationIcon = new L.DivIcon({
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
         background: white;
         border-radius: 50%;
       "></div>
     </div>
   `,
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 });
 
 // Uber-style destination icon (black pin)
@@ -164,20 +177,20 @@ const destinationIcon = new L.DivIcon({
       height: 40px;
     ">
       <div style="
-        background: linear-gradient(135deg, #1a1a1a, #000);
+        background: #000000;
         width: 32px;
         height: 32px;
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
         border: 3px solid white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
         display: flex;
         align-items: center;
         justify-content: center;
       ">
         <div style="
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
           background: white;
           border-radius: 50%;
           transform: rotate(45deg);
@@ -194,20 +207,20 @@ const driverIcon = new L.DivIcon({
   className: 'custom-div-icon car-moving',
   html: `
     <div style="
-      background: linear-gradient(135deg, #1a1a1a, #333);
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      background: #000000;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       border: 2px solid white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 16px;
+      font-size: 14px;
       position: relative;
     ">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
         <circle cx="7" cy="17" r="2"></circle>
         <path d="M9 17h6"></path>
@@ -215,18 +228,18 @@ const driverIcon = new L.DivIcon({
       </svg>
       <div style="
         position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 12px;
-        height: 12px;
-        background: #10B981;
+        top: -6px;
+        right: -6px;
+        width: 10px;
+        height: 10px;
+        background: #00C851;
         border-radius: 50%;
         border: 2px solid white;
       "></div>
     </div>
   `,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 });
 
 // Create different nearby car icons with various colors
@@ -235,20 +248,20 @@ const createNearbyCarIcon = (color: string, isMoving: boolean = false) => {
     className: `custom-div-icon ${isMoving ? 'car-moving' : ''}`,
     html: `
       <div style="
-        background: linear-gradient(135deg, ${color}, ${color}dd);
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
+        background: ${color};
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
         border: 2px solid white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 14px;
+        font-size: 12px;
         transform: rotate(${Math.random() * 360}deg);
       ">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
           <circle cx="7" cy="17" r="2"></circle>
           <path d="M9 17h6"></path>
@@ -256,13 +269,13 @@ const createNearbyCarIcon = (color: string, isMoving: boolean = false) => {
         </svg>
       </div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 };
 
-// Car colors for variety (Uber-like colors)
-const carColors = ['#1a1a1a', '#4B5563', '#6B7280', '#374151', '#111827', '#1F2937'];
+// Car colors for variety (Uber-like neutral colors)
+const carColors = ['#000000', '#333333', '#555555', '#777777', '#2C2C2C', '#404040'];
 
 const MapViewComponent: React.FC<MapViewProps> = ({
   currentLocation,
@@ -419,9 +432,10 @@ const MapViewComponent: React.FC<MapViewProps> = ({
       >
         {/* Use Uber-like map tiles */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           maxZoom={19}
+          subdomains="abcd"
         />
         
         <MapEvents />
@@ -457,11 +471,11 @@ const MapViewComponent: React.FC<MapViewProps> = ({
               center={[currentLocation.latitude, currentLocation.longitude]}
               radius={50}
               pathOptions={{
-                fillColor: '#3B82F6',
-                fillOpacity: 0.1,
-                color: '#3B82F6',
+                fillColor: '#1877F2',
+                fillOpacity: 0.08,
+                color: '#1877F2',
                 weight: 1,
-                opacity: 0.3
+                opacity: 0.2
               }}
             />
             <Marker 
@@ -470,7 +484,7 @@ const MapViewComponent: React.FC<MapViewProps> = ({
             >
               <Popup>
                 <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                  <div style={{ fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>Your Location</div>
+                  <div style={{ fontWeight: '600', marginBottom: '4px', color: '#000000' }}>Your Location</div>
                   <div style={{ fontSize: '12px', color: '#666' }}>
                     Accurate to 50 meters
                   </div>
@@ -488,7 +502,7 @@ const MapViewComponent: React.FC<MapViewProps> = ({
           >
             <Popup>
               <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                <div style={{ fontWeight: '600', marginBottom: '4px', color: '#1a1a1a' }}>Destination</div>
+                <div style={{ fontWeight: '600', marginBottom: '4px', color: '#000000' }}>Destination</div>
                 <div style={{ fontSize: '12px', color: '#666' }}>
                   Drop-off location
                 </div>
@@ -508,7 +522,7 @@ const MapViewComponent: React.FC<MapViewProps> = ({
           >
             <Popup>
               <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                <div style={{ fontWeight: '600', marginBottom: '8px', color: '#1a1a1a' }}>Your Driver</div>
+                <div style={{ fontWeight: '600', marginBottom: '8px', color: '#000000' }}>Your Driver</div>
                 <div style={{ fontSize: '14px', color: '#333', marginBottom: '4px' }}>
                   <strong>John Smith</strong>
                 </div>
@@ -533,30 +547,29 @@ const MapViewComponent: React.FC<MapViewProps> = ({
             {/* Route shadow/outline */}
             <Polyline
               positions={routeCoordinates}
-              color="#000000"
-              weight={8}
-              opacity={0.2}
+              color="#CCCCCC"
+              weight={6}
+              opacity={0.3}
               lineCap="round"
               lineJoin="round"
             />
             {/* Main route line */}
             <Polyline
               positions={routeCoordinates}
-              color="#1a1a1a"
-              weight={5}
-              opacity={0.9}
+              color="#000000"
+              weight={4}
+              opacity={0.8}
               lineCap="round"
               lineJoin="round"
             />
             {/* Route highlight */}
             <Polyline
               positions={routeCoordinates}
-              color="#3B82F6"
-              weight={3}
-              opacity={0.7}
+              color="#1877F2"
+              weight={2}
+              opacity={0.6}
               lineCap="round"
               lineJoin="round"
-              dashArray="0, 10, 5, 10"
             />
           </>
         )}
@@ -572,14 +585,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     borderRadius: Platform.OS === 'web' ? 0 : 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    backgroundColor: '#ffffff',
   },
   map: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#ffffff',
   },
 });
