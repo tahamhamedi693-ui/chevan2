@@ -296,6 +296,11 @@ export default function HomeScreen() {
   };
 
   const handleLocationSelect = async (location: any) => {
+    if (!currentCoords) {
+      Alert.alert('Location Error', 'Current location is not available. Please enable location services and try again.');
+      return;
+    }
+
     if (searchType === 'destination') {
       setDestination(location.address);
       setDestinationCoords({
@@ -308,7 +313,7 @@ export default function HomeScreen() {
       for (const ride of rideTypes) {
         try {
           const estimate = await getRouteEstimate(
-            { latitude: currentCoords!.latitude, longitude: currentCoords!.longitude, address: currentLocation },
+            { latitude: currentCoords.latitude, longitude: currentCoords.longitude, address: currentLocation },
             { latitude: location.latitude, longitude: location.longitude, address: location.address },
             ride.id
           );
