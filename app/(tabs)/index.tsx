@@ -306,12 +306,85 @@ export default function HomeScreen() {
       // Calculate fares for all ride types
       const fares: { [key: string]: number } = {};
       for (const ride of rideTypes) {
-        const estimate = await getRouteEstimate(
+        try {
+          const estimate = await getRouteEstimate(
+            { latitude: currentCoords!.latitude, longitude: currentCoords!.longitude, address: currentLocation },
+            { latitude: location.latitude, longitude: location.longitude, address: location.address },
+            ride.id
+          );
+          fares[ride.id] = estimate.fare;
+        } catch (error) {
+          console.error('Error calculating fare for', ride.id, error);
+          // Fallback to base price if calculation fails
+          fares[ride.id] = ride.price;
+        }
+      }
+      
+      setEstimatedFares(fares);
+      setShowRideSelection(true);
+    }
+    setShowLocationSearch(false);
+  };
+
+  const formatDistance = (distanceKm: number): string => {
+    if (distanceKm < 1) {
+      return `${Math.round(distanceKm * 1000)}m`;
+    }
+    return `${distanceKm.toFixed(1)}km`;
+  };
+
+  const formatDuration = (durationMinutes: number): string => {
+    if (durationMinutes < 60) {
+      return `${Math.round(durationMinutes)} min`;
+    }
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = Math.round(durationMinutes % 60);
+    return `${hours}h ${minutes}m`;
+  };
+
+  const calculateEstimatedDistance = (): number => {
+    if (!currentCoords || !destinationCoords) return 0;
+    
+    // Haversine formula to calculate distance between two points
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (destinationCoords.latitude - currentCoords.latitude) * Math.PI / 180;
+    const dLon = (destinationCoords.longitude - currentCoords.longitude) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(currentCoords.latitude * Math.PI / 180) * Math.cos(destinationCoords.latitude * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const handleLocationSelect = async (location: any) => {
+    if (searchType === 'destination') {
+      setDestination(location.address);
+      setDestinationCoords({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
+      
+      // Calculate fares for all ride types
+      const fares: { [key: string]: number } = {};
+      for (const ride of rideTypes) {
+        try {
+          const estimate = await getRouteEstimate(
           { latitude: currentCoords!.latitude, longitude: currentCoords!.longitude, address: currentLocation },
           { latitude: location.latitude, longitude: location.longitude, address: location.address },
           ride.id
         );
         fares[ride.id] = estimate.fare;
+        } catch (error) {
+          console.error('Error calculating fare for', ride.id, error);
+          // Fallback calculation based on distance
+          const distance = calculateEstimatedDistance();
+          const baseFares = { economy: 3.50, comfort: 5.25, luxury: 7.70 };
+          const perKmRates = { economy: 1.20, comfort: 1.68, luxury: 2.40 };
+          const baseFare = baseFares[ride.id as keyof typeof baseFares] || baseFares.economy;
+          const perKmRate = perKmRates[ride.id as keyof typeof perKmRates] || perKmRates.economy;
+          fares[ride.id] = Math.max(baseFare + (distance * perKmRate), baseFare * 1.5);
+        }
       }
       
       setEstimatedFares(fares);
@@ -612,6 +685,8 @@ export default function HomeScreen() {
           <ScrollView style={styles.rideOptions} showsVerticalScrollIndicator={false}>
             {rideTypes.map((ride, index) => {
               const IconComponent = ride.icon;
+              const estimatedDistance = calculateEstimatedDistance();
+              const estimatedDuration = Math.ceil(estimatedDistance * 2.5); // Rough estimate: 2.5 minutes per km
               return (
                 <TouchableOpacity
                   key={ride.id}
@@ -626,14 +701,26 @@ export default function HomeScreen() {
                     <View style={styles.rideDetails}>
                       <Text style={styles.rideName}>{ride.name}</Text>
                       <Text style={styles.rideDescription}>{ride.description}</Text>
-                      <View style={styles.rideEtaContainer}>
-                        <Clock size={12} color="#6B7280" />
-                        <Text style={styles.rideEta}>{ride.eta} away</Text>
+                      <View style={styles.rideMetrics}>
+                        <View style={styles.rideEtaContainer}>
+                          <Clock size={12} color="#6B7280" />
+                          <Text style={styles.rideEta}>{ride.eta} away</Text>
+                        </View>
+                        {estimatedDistance > 0 && (
+                          <View style={styles.rideDistanceContainer}>
+                            <MapPin size={12} color="#6B7280" />
+                            <Text style={styles.rideDistance}>
+                              {formatDistance(estimatedDistance)} • {formatDuration(estimatedDuration)}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                     <View style={styles.ridePricing}>
                       <Text style={styles.ridePrice}>${(estimatedFares[ride.id] || ride.price).toFixed(2)}</Text>
-                      <Text style={styles.ridePriceLabel}>estimated</Text>
+                      <Text style={styles.ridePriceLabel}>
+                        {estimatedDistance > 0 ? `${formatDistance(estimatedDistance)}` : 'estimated'}
+                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -1106,6 +1193,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  rideMetrics: {
+    gap: 4,
+  },
+  rideDistanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rideDistance: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginLeft: 4,
   },
   rideEta: {
     fontSize: Typography.fontSize.sm,

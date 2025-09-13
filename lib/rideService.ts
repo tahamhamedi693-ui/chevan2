@@ -66,11 +66,40 @@ export class RideService {
       .select('*')
       .single();
 
-    const baseFare = settings?.base_fare || 5.00;
-    const perKmRate = settings?.per_km_rate || 1.50;
-    const perMinuteRate = settings?.per_minute_rate || 0.25;
+    // Base fares by ride type
+    const baseFares = {
+      'economy': settings?.base_fare || 3.50,
+      'comfort': (settings?.base_fare || 3.50) * 1.5,
+      'luxury': (settings?.base_fare || 3.50) * 2.2
+    };
+    
+    // Per km rates by ride type
+    const perKmRates = {
+      'economy': settings?.per_km_rate || 1.20,
+      'comfort': (settings?.per_km_rate || 1.20) * 1.4,
+      'luxury': (settings?.per_km_rate || 1.20) * 2.0
+    };
+    
+    // Per minute rates by ride type
+    const perMinuteRates = {
+      'economy': settings?.per_minute_rate || 0.25,
+      'comfort': (settings?.per_minute_rate || 0.25) * 1.3,
+      'luxury': (settings?.per_minute_rate || 0.25) * 1.8
+    };
 
-    const fare = baseFare + (distance * perKmRate) + (duration * perMinuteRate);
+    const baseFare = baseFares[rideType as keyof typeof baseFares] || baseFares.economy;
+    const perKmRate = perKmRates[rideType as keyof typeof perKmRates] || perKmRates.economy;
+    const perMinuteRate = perMinuteRates[rideType as keyof typeof perMinuteRates] || perMinuteRates.economy;
+    
+    // Calculate fare: base + (distance in km * rate per km) + (time in minutes * rate per minute)
+    const distanceFare = distance * perKmRate;
+    const timeFare = duration * perMinuteRate;
+    const totalFare = baseFare + distanceFare + timeFare;
+    
+    // Apply minimum fare
+    const minimumFare = baseFare * 1.5;
+    const fare = Math.max(totalFare, minimumFare);
+    
     return Math.round(fare * 100) / 100;
   }
 
