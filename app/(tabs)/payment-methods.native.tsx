@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditCard, Plus, Check, X, ChevronRight, Lock } from 'lucide-react-native';
-import { useStripe } from '@stripe/stripe-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import StripeProviderWrapper from '@/components/StripeProviderWrapper';
 import { paymentMethodsTable } from '@/lib/typedSupabase';
@@ -35,7 +34,20 @@ export default function PaymentMethodsScreen() {
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, loading: authLoading } = useAuth();
-  const { createToken } = useStripe();
+  const [stripeHook, setStripeHook] = useState<any>(null);
+
+  useEffect(() => {
+    // Dynamically import Stripe hook to avoid web bundling issues
+    const loadStripe = async () => {
+      try {
+        const { useStripe } = await import('@stripe/stripe-react-native');
+        setStripeHook({ useStripe });
+      } catch (error) {
+        console.log('Stripe not available on this platform');
+      }
+    };
+    loadStripe();
+  }, []);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -141,8 +153,15 @@ export default function PaymentMethodsScreen() {
   const handleAddCreditCard = async () => {
     if (!validateCard()) return;
 
+    if (!stripeHook) {
+      Alert.alert('Error', 'Stripe is not available on this platform');
+      return;
+    }
+
     setIsProcessing(true);
     try {
+      const { createToken } = stripeHook.useStripe();
+      
       // Create Stripe token
       const cardDetails = {
         number: cardForm.cardNumber.replace(/\s/g, ''),
