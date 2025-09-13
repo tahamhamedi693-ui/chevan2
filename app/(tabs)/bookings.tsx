@@ -84,7 +84,6 @@ export default function BookingsScreen() {
     };
     
     loadUserRides();
-  }, [user, authLoading, loadRides]);
     
     // Entrance animation
     Animated.timing(fadeAnim, {
@@ -768,5 +767,34 @@ const styles = StyleSheet.create({
   },
   secondaryActionButtonText: {
     color: '#374151',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  placeholder: {
+    width: 40,
   },
 });
