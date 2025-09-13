@@ -9,34 +9,31 @@ import {
   Alert,
   StatusBar,
   Animated,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CreditCard, Plus, Check, X, Smartphone, ChevronRight } from 'lucide-react-native';
+import { CreditCard, Plus, Check, X, ChevronRight, Lock } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { paymentMethodsTable } from '@/lib/typedSupabase';
 import { Database } from '@/types/database';
 
 type PaymentMethod = Database['public']['Tables']['payment_methods']['Row'];
 
-const paymentTypeIcons = {
-  card: CreditCard,
-  paypal: CreditCard,
-  apple_pay: Smartphone,
-  google_pay: Smartphone,
-};
-
-const paymentTypeLabels = {
-  card: 'Credit/Debit Card',
-  paypal: 'PayPal',
-  apple_pay: 'Apple Pay',
-  google_pay: 'Google Pay',
-};
+// Stripe test publishable key - replace with your actual key
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_your_stripe_publishable_key_here';
 
 export default function PaymentMethodsScreen() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [cardForm, setCardForm] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: '',
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -59,6 +56,7 @@ export default function PaymentMethodsScreen() {
       const { data, error } = await paymentMethodsTable()
         .select('*')
         .eq('user_id', user.id)
+        .eq('type', 'card')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -79,28 +77,83 @@ export default function PaymentMethodsScreen() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
-        {
-          id: '2',
-          user_id: user!.id,
-          type: 'apple_pay',
-          card_last_four: null,
-          card_brand: null,
-          is_default: false,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddPaymentMethod = async (type: 'card' | 'paypal' | 'apple_pay' | 'google_pay') => {
+  const formatCardNumber = (value: string) => {
+    // Remove all non-digits
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    // Add spaces every 4 digits
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return v;
+    }
+  };
+
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  const getCardBrand = (cardNumber: string) => {
+    const number = cardNumber.replace(/\s/g, '');
+    if (number.match(/^4/)) return 'Visa';
+    if (number.match(/^5[1-5]/)) return 'Mastercard';
+    if (number.match(/^3[47]/)) return 'American Express';
+    if (number.match(/^6/)) return 'Discover';
+    return 'Unknown';
+  };
+
+  const validateCard = () => {
+    if (!cardForm.cardNumber || cardForm.cardNumber.replace(/\s/g, '').length < 13) {
+      Alert.alert('Invalid Card', 'Please enter a valid card number');
+      return false;
+    }
+    if (!cardForm.expiryDate || cardForm.expiryDate.length < 5) {
+      Alert.alert('Invalid Expiry', 'Please enter a valid expiry date');
+      return false;
+    }
+    if (!cardForm.cvv || cardForm.cvv.length < 3) {
+      Alert.alert('Invalid CVV', 'Please enter a valid CVV');
+      return false;
+    }
+    if (!cardForm.cardholderName.trim()) {
+      Alert.alert('Invalid Name', 'Please enter the cardholder name');
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddCreditCard = async () => {
+    if (!validateCard()) return;
+
+    setIsProcessing(true);
     try {
+      // In a real app, you would tokenize the card with Stripe here
+      // const token = await createStripeToken(cardForm);
+      
+      const cardNumber = cardForm.cardNumber.replace(/\s/g, '');
+      const lastFour = cardNumber.slice(-4);
+      const cardBrand = getCardBrand(cardForm.cardNumber);
+
       const paymentData: Database['public']['Tables']['payment_methods']['Insert'] = {
         user_id: user!.id,
-        type,
+        type: 'card',
+        card_last_four: lastFour,
+        card_brand: cardBrand,
         is_default: paymentMethods.length === 0, // First payment method is default
         is_active: true,
       };
@@ -111,11 +164,19 @@ export default function PaymentMethodsScreen() {
       if (error) throw error;
       
       setShowAddModal(false);
+      setCardForm({
+        cardNumber: '',
+        expiryDate: '',
+        cvv: '',
+        cardholderName: '',
+      });
       loadPaymentMethods();
-      Alert.alert('Success', 'Payment method added successfully');
+      Alert.alert('Success', 'Credit card added successfully');
     } catch (error) {
       console.error('Error adding payment method:', error);
-      Alert.alert('Error', 'Failed to add payment method');
+      Alert.alert('Error', 'Failed to add credit card');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -166,10 +227,7 @@ export default function PaymentMethodsScreen() {
   };
 
   const getPaymentMethodDisplay = (method: PaymentMethod) => {
-    if (method.type === 'card' && method.card_last_four) {
-      return `${method.card_brand} •••• ${method.card_last_four}`;
-    }
-    return paymentTypeLabels[method.type];
+    return `${method.card_brand} •••• ${method.card_last_four}`;
   };
 
   if (loading) {
@@ -204,21 +262,20 @@ export default function PaymentMethodsScreen() {
           {paymentMethods.length === 0 ? (
             <View style={styles.emptyState}>
               <CreditCard size={48} color="#E5E7EB" />
-              <Text style={styles.emptyStateTitle}>No payment methods</Text>
+              <Text style={styles.emptyStateTitle}>No credit cards</Text>
               <Text style={styles.emptyStateText}>
-                Add a payment method to book rides
+                Add a credit card to book rides
               </Text>
               <TouchableOpacity
                 style={styles.emptyStateButton}
                 onPress={() => setShowAddModal(true)}
               >
-                <Text style={styles.emptyStateButtonText}>Add Payment Method</Text>
+                <Text style={styles.emptyStateButtonText}>Add Credit Card</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.paymentList}>
               {paymentMethods.map((method) => {
-                const IconComponent = paymentTypeIcons[method.type];
                 return (
                   <TouchableOpacity
                     key={method.id}
@@ -229,7 +286,7 @@ export default function PaymentMethodsScreen() {
                     onPress={() => !method.is_default && handleSetDefault(method)}
                   >
                     <View style={[styles.paymentIcon, { backgroundColor: method.is_default ? '#DBEAFE' : '#F3F4F6' }]}>
-                      <IconComponent size={20} color={method.is_default ? 'black' : '#6B7280'} />
+                      <CreditCard size={20} color={method.is_default ? 'black' : '#6B7280'} />
                     </View>
                     <View style={styles.paymentContent}>
                       <Text style={styles.paymentLabel}>
@@ -256,7 +313,7 @@ export default function PaymentMethodsScreen() {
         </ScrollView>
       </Animated.View>
 
-      {/* Add Payment Method Modal */}
+      {/* Add Credit Card Modal */}
       <Modal
         visible={showAddModal}
         animationType="slide"
@@ -270,56 +327,93 @@ export default function PaymentMethodsScreen() {
             >
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Add Payment Method</Text>
+            <Text style={styles.modalTitle}>Add Credit Card</Text>
             <View style={styles.placeholder} />
           </View>
 
           <View style={styles.modalContent}>
-            <Text style={styles.sectionTitle}>Choose a payment method</Text>
+            <Text style={styles.sectionTitle}>Enter card details</Text>
             
-            <TouchableOpacity
-              style={styles.paymentOption}
-              onPress={() => handleAddPaymentMethod('card')}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: '#DBEAFE' }]}>
-                <CreditCard size={24} color="black" />
+            <View style={styles.formContainer}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Card Number</Text>
+                <TextInput
+                  style={styles.cardInput}
+                  placeholder="1234 5678 9012 3456"
+                  value={cardForm.cardNumber}
+                  onChangeText={(text) => setCardForm({
+                    ...cardForm,
+                    cardNumber: formatCardNumber(text)
+                  })}
+                  keyboardType="numeric"
+                  maxLength={19}
+                />
               </View>
-              <Text style={styles.paymentOptionText}>Credit or Debit Card</Text>
-              <ChevronRight size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.paymentOption}
-              onPress={() => handleAddPaymentMethod('paypal')}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: '#FEF3C7' }]}>
-                <CreditCard size={24} color="#F59E0B" />
+              
+              <View style={styles.rowInputs}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                  <Text style={styles.inputLabel}>Expiry Date</Text>
+                  <TextInput
+                    style={styles.cardInput}
+                    placeholder="MM/YY"
+                    value={cardForm.expiryDate}
+                    onChangeText={(text) => setCardForm({
+                      ...cardForm,
+                      expiryDate: formatExpiryDate(text)
+                    })}
+                    keyboardType="numeric"
+                    maxLength={5}
+                  />
+                </View>
+                
+                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                  <Text style={styles.inputLabel}>CVV</Text>
+                  <TextInput
+                    style={styles.cardInput}
+                    placeholder="123"
+                    value={cardForm.cvv}
+                    onChangeText={(text) => setCardForm({
+                      ...cardForm,
+                      cvv: text.replace(/[^0-9]/g, '')
+                    })}
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry
+                  />
+                </View>
               </View>
-              <Text style={styles.paymentOptionText}>PayPal</Text>
-              <ChevronRight size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.paymentOption}
-              onPress={() => handleAddPaymentMethod('apple_pay')}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: '#F3F4F6' }]}>
-                <Smartphone size={24} color="#374151" />
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Cardholder Name</Text>
+                <TextInput
+                  style={styles.cardInput}
+                  placeholder="John Doe"
+                  value={cardForm.cardholderName}
+                  onChangeText={(text) => setCardForm({
+                    ...cardForm,
+                    cardholderName: text
+                  })}
+                  autoCapitalize="words"
+                />
               </View>
-              <Text style={styles.paymentOptionText}>Apple Pay</Text>
-              <ChevronRight size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.paymentOption}
-              onPress={() => handleAddPaymentMethod('google_pay')}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: '#D1FAE5' }]}>
-                <Smartphone size={24} color="#059669" />
+              
+              <View style={styles.securityNote}>
+                <Lock size={16} color="#6B7280" />
+                <Text style={styles.securityText}>
+                  Your card information is encrypted and secure
+                </Text>
               </View>
-              <Text style={styles.paymentOptionText}>Google Pay</Text>
-              <ChevronRight size={20} color="#9CA3AF" />
-            </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.addCardButton, isProcessing && styles.addCardButtonDisabled]}
+                onPress={handleAddCreditCard}
+                disabled={isProcessing}
+              >
+                <Text style={styles.addCardButtonText}>
+                  {isProcessing ? 'Adding Card...' : 'Add Card'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </SafeAreaView>
       </Modal>
@@ -498,13 +592,24 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 20,
   },
-  paymentOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  formContainer: {
+    flex: 1,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  cardInput: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    fontSize: 16,
+    color: '#111827',
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
@@ -513,18 +618,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+  rowInputs: {
+    flexDirection: 'row',
+    marginBottom: 20,
   },
-  paymentOptionText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 24,
+    gap: 8,
+  },
+  securityText: {
+    fontSize: 12,
+    color: '#6B7280',
     flex: 1,
+  },
+  addCardButton: {
+    backgroundColor: 'black',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  addCardButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  addCardButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
