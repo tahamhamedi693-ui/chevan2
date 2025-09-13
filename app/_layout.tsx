@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { router, useNavigationContainerRef } from 'expo-router';
@@ -37,16 +38,25 @@ export default function RootLayout() {
     return null;
   }
 
+  const AppContent = () => (
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="auto" />
+    </>
+  );
+
+  // Only use StripeProvider on native platforms
+  if (Platform.OS === 'web') {
+    return <AppContent />;
+  }
+
   return (
     <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
-      <>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </>
+      <AppContent />
     </StripeProvider>
   );
 }
