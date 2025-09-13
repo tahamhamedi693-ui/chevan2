@@ -1,11 +1,6 @@
 import React from 'react';
 
-interface StripeProviderWrapperProps {
-  publishableKey: string;
-  children: React.ReactNode;
-}
-
-export default function StripeProviderWrapper({ publishableKey, children }: StripeProviderWrapperProps) {
+export default function StripeProviderWrapper({ children }: { children: React.ReactNode }) {
   // No-op component for web platform - just renders children
   return <>{children}</>;
 }
