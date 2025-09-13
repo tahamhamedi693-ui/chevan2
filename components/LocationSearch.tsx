@@ -10,6 +10,8 @@ import {
   StatusBar,
 } from 'react-native';
 import { Search, MapPin, Clock, X, ArrowLeft } from 'lucide-react-native';
+import { savedAddressesTable } from '@/lib/typedSupabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LocationResult {
   id: string;
@@ -38,6 +40,40 @@ export default function LocationSearch({
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<LocationResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [realSavedAddresses, setRealSavedAddresses] = useState<LocationResult[]>([]);
+  const { user } = useAuth();
+
+  // Load saved addresses from database
+  useEffect(() => {
+    const loadSavedAddresses = async () => {
+      if (!user) return;
+      
+      try {
+        const result = await savedAddressesTable()
+          .select()
+          .eq()
+          .order();
+
+        if (result.data) {
+          const addresses = result.data.map(addr => ({
+            id: addr.id,
+            name: addr.label,
+            address: addr.address,
+            latitude: addr.latitude,
+            longitude: addr.longitude,
+            type: 'saved' as const
+          }));
+          setRealSavedAddresses(addresses);
+        }
+      } catch (error) {
+        console.error('Error loading saved addresses:', error);
+        // Use fallback saved addresses if database fails
+        setRealSavedAddresses(savedAddresses);
+      }
+    };
+
+    loadSavedAddresses();
+  }, [user, savedAddresses]);
 
   // Mock search function - in a real app, you'd use a geocoding service
   const searchLocations = async (searchQuery: string) => {
@@ -194,10 +230,10 @@ export default function LocationSearch({
 
         {!loading && query.length === 0 && (
           <>
-            {savedAddresses.length > 0 && (
+            {realSavedAddresses.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Saved Addresses</Text>
-                {savedAddresses.map(renderLocationItem)}
+                {realSavedAddresses.map(renderLocationItem)}
               </View>
             )}
 
@@ -208,7 +244,7 @@ export default function LocationSearch({
               </View>
             )}
 
-            {savedAddresses.length === 0 && recentSearches.length === 0 && (
+            {realSavedAddresses.length === 0 && recentSearches.length === 0 && (
               <View style={styles.emptyState}>
                 <MapPin size={48} color="#E5E7EB" />
                 <Text style={styles.emptyStateText}>Start typing to search for locations</Text>

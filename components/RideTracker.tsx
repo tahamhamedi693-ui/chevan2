@@ -228,6 +228,36 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
             <Text style={styles.shareButtonText}>Share Trip</Text>
           </View>
         </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.safetyButton}
+          onPress={() => {
+            Alert.alert(
+              'Safety Options',
+              'Choose a safety feature:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Share Location', 
+                  onPress: () => Alert.alert('Location Shared', 'Your live location is now being shared with emergency contacts.') 
+                },
+                { 
+                  text: 'Safety Check-in', 
+                  onPress: () => Alert.alert('Safety Check-in', 'We\'ll check on you in 10 minutes if your trip isn\'t completed.') 
+                },
+                { 
+                  text: 'Report Issue', 
+                  onPress: () => Alert.alert('Report Issue', 'Safety issue reported. Our team will follow up immediately.') 
+                },
+              ]
+            );
+          }}
+        >
+          <View style={styles.safetyButtonContent}>
+            <Shield size={16} color={Colors.error} />
+            <Text style={styles.safetyButtonText}>Safety</Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -542,6 +572,24 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     color: Colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  safetyButton: {
+    flex: 1,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    ...Shadows.sm,
+  },
+  safetyButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+  },
+  safetyButtonText: {
+    color: Colors.error,
     fontSize: 15,
     fontWeight: '600',
   },

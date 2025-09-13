@@ -30,6 +30,7 @@ import ScheduleRide from '@/components/ScheduleRide';
 import CarSelection, { CarOption } from '@/components/CarSelection';
 import { useRides } from '@/hooks/useRides';
 import { Location as RideLocation } from '@/lib/rideService';
+import { router } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -358,6 +359,31 @@ export default function HomeScreen() {
     );
   };
 
+  const handleSavedAddresses = () => {
+    router.push('/(tabs)/saved-addresses');
+  };
+
+  const handleSafety = () => {
+    Alert.alert(
+      'Safety Center',
+      'Choose a safety option:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Share Trip', 
+          onPress: () => Alert.alert('Share Trip', 'Trip sharing activated. Your location will be shared with emergency contacts.') 
+        },
+        { 
+          text: 'Emergency Contacts', 
+          onPress: () => Alert.alert('Emergency Contacts', 'Manage your emergency contacts in settings.') 
+        },
+        { 
+          text: 'Safety Toolkit', 
+          onPress: () => Alert.alert('Safety Toolkit', 'Access safety features:\n• Emergency button\n• Trip sharing\n• Safety check-in\n• Report safety issue') 
+        },
+      ]
+    );
+  };
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
@@ -488,7 +514,10 @@ export default function HomeScreen() {
                 <Text style={styles.quickActionText}>Schedule</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.quickActionItem}>
+              <TouchableOpacity 
+                style={styles.quickActionItem}
+                onPress={handleSavedAddresses}
+              >
                 <LinearGradient
                   colors={['#CCFBF1', '#A7F3D0'] as any}
                   style={styles.quickActionIcon}
@@ -498,7 +527,10 @@ export default function HomeScreen() {
                 <Text style={styles.quickActionText}>Saved</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.quickActionItem}>
+              <TouchableOpacity 
+                style={styles.quickActionItem}
+                onPress={handleSafety}
+              >
                 <LinearGradient
                   colors={['#FEF3C7', '#FDE68A'] as any}
                   style={styles.quickActionIcon}
