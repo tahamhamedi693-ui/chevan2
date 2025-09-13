@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
@@ -6,11 +7,10 @@ const config = getDefaultConfig(__dirname);
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
-// Block native-only packages from web builds
-config.resolver.blockList = [
-  // Block @stripe/stripe-react-native on web
-  /.*\/node_modules\/@stripe\/stripe-react-native\/.*\.js$/,
-];
+// Alias native modules to web-compatible wrappers
+config.resolver.extraNodeModules = {
+  '@stripe/stripe-react-native': path.resolve(__dirname, 'components/StripeProviderWrapper.web.tsx'),
+};
 
 // Platform-specific extensions priority
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'web.js', 'web.ts', 'web.tsx'];
