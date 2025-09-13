@@ -1,39 +1,19 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { router, useNavigationContainerRef } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useState } from 'react';
+import StripeProviderWrapper from '@/components/StripeProviderWrapper';
 
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key_here';
-
-// No-op component for web platform
-const NoOpProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 export default function RootLayout() {
   useFrameworkReady();
   const { user, loading } = useAuth();
   const [isNavigationReady, setIsNavigationReady] = useState(false);
-  const [StripeProviderComponent, setStripeProviderComponent] = useState<React.ComponentType<any> | null>(null);
   const navigationRef = useNavigationContainerRef();
-
-  // Dynamically import StripeProvider only on native platforms
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      setStripeProviderComponent(() => NoOpProvider);
-    } else {
-      import('@stripe/stripe-react-native')
-        .then((stripeModule) => {
-          setStripeProviderComponent(() => stripeModule.StripeProvider);
-        })
-        .catch(() => {
-          // Fallback to no-op if import fails
-          setStripeProviderComponent(() => NoOpProvider);
-        });
-    }
-  }, []);
 
   useEffect(() => {
     const unsubscribe = navigationRef.addListener('state', () => {
@@ -53,7 +33,7 @@ export default function RootLayout() {
     }
   }, [user, loading, isNavigationReady]);
 
-  if (loading || !StripeProviderComponent) {
+  if (loading) {
     return null;
   }
 
@@ -69,8 +49,8 @@ export default function RootLayout() {
   );
 
   return (
-    <StripeProviderComponent publishableKey={STRIPE_PUBLISHABLE_KEY}>
+    <StripeProviderWrapper publishableKey={STRIPE_PUBLISHABLE_KEY}>
       <AppContent />
-    </StripeProviderComponent>
+    </StripeProviderWrapper>
   );
 }
