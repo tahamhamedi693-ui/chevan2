@@ -2,13 +2,17 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
-import { StripeProvider } from '@stripe/stripe-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { router, useNavigationContainerRef } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useState } from 'react';
 
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key_here';
+
+// Conditionally import StripeProvider only on native platforms
+const StripeProviderComponent = Platform.OS === 'web' 
+  ? ({ children }: { children: React.ReactNode }) => <>{children}</>
+  : require('@stripe/stripe-react-native').StripeProvider;
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -55,8 +59,8 @@ export default function RootLayout() {
   }
 
   return (
-    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+    <StripeProviderComponent publishableKey={STRIPE_PUBLISHABLE_KEY}>
       <AppContent />
-    </StripeProvider>
+    </StripeProviderComponent>
   );
 }
