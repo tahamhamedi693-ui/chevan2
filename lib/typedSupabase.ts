@@ -1,100 +1,15 @@
 import { supabase } from './supabase';
 import { Database } from '@/types/database';
+import { useAuth } from '@/hooks/useAuth';
 
 // Type-safe wrapper for payment_methods table
 export const paymentMethodsTable = () => {
   return supabase.from('payment_methods') as any;
 };
 
-// Define the type for saved addresses
-type SavedAddress = {
-  id: string;
-  user_id: string;
-  label: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-  [key: string]: any; // Add index signature to allow string indexing
-};
-
-// Mock data for saved addresses
-let mockAddresses: SavedAddress[] = [
-  {
-    id: '1',
-    user_id: 'mock-user-id',
-    label: 'Home',
-    address: '123 Oak Street, Residential Area',
-    latitude: 40.7128,
-    longitude: -74.0060,
-    is_default: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    user_id: 'mock-user-id',
-    label: 'Work',
-    address: '456 Business Avenue, Downtown',
-    latitude: 40.7580,
-    longitude: -73.9855,
-    is_default: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-// Simple mock implementation for saved_addresses table
+// Type-safe wrapper for saved_addresses table
 export const savedAddressesTable = () => {
-  return {
-    select: () => {
-      return {
-        eq: () => {
-          return {
-            order: () => Promise.resolve({ data: mockAddresses, error: null })
-          };
-        }
-      };
-    },
-    insert: (data: any) => {
-      const newAddress = {
-        id: `mock-${Date.now()}`,
-        ...data,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      mockAddresses.push(newAddress);
-      return Promise.resolve({ data: newAddress, error: null });
-    },
-    update: (data: any) => {
-      return {
-        eq: (field: string, value: any) => {
-          const index = mockAddresses.findIndex(addr => addr[field] === value);
-          if (index >= 0) {
-            mockAddresses[index] = {
-              ...mockAddresses[index],
-              ...data,
-              updated_at: new Date().toISOString()
-            };
-          }
-          return Promise.resolve({ data: mockAddresses[index], error: null });
-        }
-      };
-    },
-    delete: () => {
-      return {
-        eq: (field: string, value: any) => {
-          const index = mockAddresses.findIndex(addr => addr[field] === value);
-          if (index >= 0) {
-            mockAddresses.splice(index, 1);
-          }
-          return Promise.resolve({ data: null, error: null });
-        }
-      };
-    }
-  };
+  return supabase.from('saved_addresses') as any;
 };
 
 // Type-safe wrapper for profiles table

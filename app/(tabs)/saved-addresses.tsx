@@ -64,14 +64,13 @@ export default function SavedAddressesScreen() {
     if (!user) return;
     
     try {
-      // Use our mock implementation
-      const result = await savedAddressesTable()
+      const { data, error } = await savedAddressesTable()
         .select()
-        .eq()
-        .order();
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-      if (result.error) throw result.error;
-      setAddresses(result.data || []);
+      if (error) throw error;
+      setAddresses(data || []);
     } catch (error) {
       console.error('Error fetching addresses:', error);
       // Fallback to mock data if database fails
@@ -111,7 +110,7 @@ export default function SavedAddressesScreen() {
     }
 
     try {
-      const addressData = {
+      const addressData: Database['public']['Tables']['saved_addresses']['Insert'] = {
         user_id: user!.id,
         label: formData.label,
         address: formData.address,
@@ -124,14 +123,14 @@ export default function SavedAddressesScreen() {
       setCurrentCoordinates(null);
 
       if (editingAddress) {
-        const result = await savedAddressesTable()
+        const { error } = await savedAddressesTable()
           .update(addressData)
           .eq('id', editingAddress.id);
-        if (result.error) throw result.error;
+        if (error) throw error;
       } else {
-        const result = await savedAddressesTable()
+        const { error } = await savedAddressesTable()
           .insert(addressData);
-        if (result.error) throw result.error;
+        if (error) throw error;
       }
 
       setShowAddModal(false);
@@ -156,11 +155,12 @@ export default function SavedAddressesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await savedAddressesTable()
+              const { error } = await savedAddressesTable()
                 .delete()
                 .eq('id', address.id);
-              if (result.error) throw result.error;
+              if (error) throw error;
               loadSavedAddresses();
+              Alert.alert('Success', 'Address deleted successfully');
             } catch (error) {
               console.error('Error deleting address:', error);
               Alert.alert('Error', 'Failed to delete address');
