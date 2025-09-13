@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MapPin, Navigation, Search, Car, Users, Crown, Clock, Star, Phone, MessageCircle, X, Zap, Shield, Bell, Sparkles, Calendar, Home, Truck } from 'lucide-react-native';
+import { MapPin, Navigation, Search, Car, Users, Crown, Clock, Star, Phone, MessageCircle, X, Zap, Shield, Bell, Sparkles, Calendar, Chrome as Home, Truck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/lib/designSystem';
