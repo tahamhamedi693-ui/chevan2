@@ -22,17 +22,21 @@ export default function RootLayout() {
   }, [navigationRef]);
 
   useEffect(() => {
-    if (loading || !isNavigationReady) return;
+    if (loading || !isNavigationReady) {
+      console.log('Navigation not ready or loading:', { loading, isNavigationReady });
+      return;
+    }
 
     const inAuthGroup = segments[0] === '(auth)';
+    console.log('Navigation check:', { user: !!user, inAuthGroup, segments });
 
     if (!user && !inAuthGroup) {
       // User is not authenticated and not in auth screens, redirect to login
-      console.log('No user detected, redirecting to login');
+      console.log('No user detected, redirecting to login from:', segments);
       router.replace('/(auth)/login');
     } else if (user && inAuthGroup) {
       // User is authenticated but still in auth screens, redirect to main app
-      console.log('User authenticated, redirecting to main app');
+      console.log('User authenticated, redirecting to main app from:', segments);
       router.replace('/(tabs)');
     }
   }, [user, loading, isNavigationReady, segments]);

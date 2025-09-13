@@ -106,12 +106,18 @@ export default function ProfileScreen() {
           onPress: async () => {
             console.log('User confirmed logout');
             try {
-              await signOut();
+              const result = await signOut();
               console.log('SignOut completed, navigating to login');
-              router.replace('/(auth)/login');
+              // Force navigation with a small delay to ensure state is cleared
+              setTimeout(() => {
+                router.replace('/(auth)/login');
+              }, 100);
             } catch (error) {
               console.error('Logout error:', error);
-              router.replace('/(auth)/login');
+              // Force navigation even on error
+              setTimeout(() => {
+                router.replace('/(auth)/login');
+              }, 100);
             }
           },
         },
