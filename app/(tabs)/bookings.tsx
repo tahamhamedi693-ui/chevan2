@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Car, Clock, MapPin, Star, Phone, MessageCircle, X, Calendar, Filter } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import RatingModal from '@/components/RatingModal';
+import RideTracker from '@/components/RideTracker';
 import { useRides } from '@/hooks/useRides';
 import { Database } from '@/types/database';
 
@@ -22,6 +23,7 @@ type Ride = Database['public']['Tables']['rides']['Row'];
 export default function BookingsScreen() {
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -95,7 +97,8 @@ export default function BookingsScreen() {
   };
 
   const handleTrackRide = (ride: Ride) => {
-    Alert.alert('Track Ride', 'Tracking functionality would be implemented here');
+    setSelectedRide(ride);
+    setShowTrackingModal(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -364,6 +367,69 @@ export default function BookingsScreen() {
         onSubmit={handleRatingSubmit}
         ride={selectedRide}
       />
+
+      {/* Ride Tracking Modal */}
+      <Modal
+        visible={showTrackingModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowTrackingModal(false)}
+            >
+              <X size={24} color="#374151" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Track Your Ride</Text>
+            <View style={styles.placeholder} />
+          </View>
+          {selectedRide && (
+            <RideTracker
+              ride={selectedRide}
+              onCancel={() => {
+                Alert.alert(
+                  'Cancel Ride',
+                  'Are you sure you want to cancel this ride?',
+                  [
+                    { text: 'Keep Ride', style: 'cancel' },
+                    {
+                      text: 'Cancel Ride',
+                      style: 'destructive',
+                      onPress: () => {
+                        setShowTrackingModal(false);
+                        // Handle ride cancellation
+                      },
+                    },
+                  ]
+                );
+              }}
+              onContact={() => {
+                Alert.alert(
+                  'Contact Driver',
+                  'How would you like to contact your driver?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Call', onPress: () => Alert.alert('Calling driver...') },
+                    { text: 'Message', onPress: () => Alert.alert('Opening messages...') },
+                  ]
+                );
+              }}
+              onEmergency={() => {
+                Alert.alert(
+                  'Emergency',
+                  'Contact emergency services?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Call 911', onPress: () => Alert.alert('Calling 911...') },
+                  ]
+                );
+              }}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
