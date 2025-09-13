@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import {
   View,
   Text,
@@ -32,8 +33,11 @@ export default function PaymentMethodsScreen() {
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, loading: authLoading } = useAuth();
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     if (user && !authLoading) {
       loadPaymentMethods();
     }
@@ -44,6 +48,10 @@ export default function PaymentMethodsScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
+    
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [user, authLoading]);
 
   const loadPaymentMethods = async () => {
@@ -58,25 +66,31 @@ export default function PaymentMethodsScreen() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPaymentMethods(data || []);
+      if (isMountedRef.current) {
+        setPaymentMethods(data || []);
+      }
     } catch (error) {
       console.error('Error fetching payment methods:', error);
       // Fallback to mock data if database fails
-      setPaymentMethods([
-        {
-          id: '1',
-          user_id: user!.id,
-          type: 'card',
-          card_last_four: '4567',
-          card_brand: 'Visa',
-          is_default: true,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ]);
+      if (isMountedRef.current) {
+        setPaymentMethods([
+          {
+            id: '1',
+            user_id: user!.id,
+            type: 'card',
+            card_last_four: '4567',
+            card_brand: 'Visa',
+            is_default: true,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -137,7 +151,9 @@ export default function PaymentMethodsScreen() {
   const handleAddCreditCard = async () => {
     if (!validateCard()) return;
 
-    setIsProcessing(true);
+    if (isMountedRef.current) {
+      setIsProcessing(true);
+    }
     try {
       // Web version - simplified without Stripe integration
       Alert.alert(
@@ -165,19 +181,23 @@ export default function PaymentMethodsScreen() {
       
       if (error) throw error;
       
-      setShowAddModal(false);
-      setCardForm({
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-        cardholderName: '',
-      });
+      if (isMountedRef.current) {
+        setShowAddModal(false);
+        setCardForm({
+          cardNumber: '',
+          expiryDate: '',
+          cvv: '',
+          cardholderName: '',
+        });
+      }
       loadPaymentMethods();
     } catch (error) {
       console.error('Error adding payment method:', error);
       Alert.alert('Error', 'Failed to add credit card');
     } finally {
-      setIsProcessing(false);
+      if (isMountedRef.current) {
+        setIsProcessing(false);
+      }
     }
   };
 
