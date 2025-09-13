@@ -102,16 +102,8 @@ export default function ProfileScreen() {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
-            try {
-              const { error } = await signOut();
-              if (error) {
-                Alert.alert('Error', 'Failed to sign out');
-              } else {
-                // Navigate back to login screen
-                router.replace('/(auth)/login');
-              }
-            } catch (error) {
-              console.error('Logout error:', error);
+            const { error } = await signOut();
+            if (error) {
               Alert.alert('Error', 'Failed to sign out');
             }
           },

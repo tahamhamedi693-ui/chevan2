@@ -12,7 +12,7 @@ export function useRides() {
   const { user } = useAuth();
 
   // Load user's rides
-  const loadRides = useCallback(async () => {
+  const loadRides = useCallback(async (): Promise<{ rides: Ride[], activeRide: Ride | null } | null> => {
     if (!user) return;
     
     setLoading(true);
@@ -23,8 +23,11 @@ export function useRides() {
       // Find active ride
       const active = userRides.find(ride => ride.status === 'active');
       setActiveRide(active || null);
+      
+      return { rides: userRides, activeRide: active || null };
     } catch (error) {
       console.error('Error loading rides:', error);
+      return null;
     } finally {
       setLoading(false);
     }
