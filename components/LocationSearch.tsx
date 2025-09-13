@@ -51,8 +51,8 @@ export default function LocationSearch({
       try {
         const result = await savedAddressesTable()
           .select()
-          .eq()
-          .order();
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
         if (result.data) {
           const addresses = result.data.map(addr => ({
