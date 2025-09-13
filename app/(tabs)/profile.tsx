@@ -93,7 +93,8 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    console.log('Logout button pressed');
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
@@ -103,16 +104,13 @@ export default function ProfileScreen() {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
+            console.log('User confirmed logout');
             try {
-              console.log('Starting logout process...');
-              const { error } = await signOut();
-              
-              console.log('Logout completed, forcing navigation...');
-              // Force immediate navigation to login
+              await signOut();
+              console.log('SignOut completed, navigating to login');
               router.replace('/(auth)/login');
             } catch (error) {
-              console.error('Logout exception:', error);
-              // Even if there's an error, force logout and redirect
+              console.error('Logout error:', error);
               router.replace('/(auth)/login');
             }
           },
