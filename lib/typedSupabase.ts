@@ -9,7 +9,7 @@ export const paymentMethodsTable = () => {
 
 // Type-safe wrapper for saved_addresses table
 export const savedAddressesTable = () => {
-  return supabase.from('saved_addresses');
+  return supabase.from('saved_addresses') as any;
 };
 
 // Type-safe wrapper for profiles table

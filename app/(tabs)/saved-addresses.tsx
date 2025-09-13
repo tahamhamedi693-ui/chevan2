@@ -64,11 +64,14 @@ export default function SavedAddressesScreen() {
     if (!user) return;
     
     try {
+      console.log('Loading addresses for user:', user.id);
       const { data, error } = await savedAddressesTable()
-        .select()
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
+      console.log('Load addresses result:', { data, error });
+      
       if (error) throw error;
       setAddresses(data || []);
     } catch (error) {
@@ -109,6 +112,7 @@ export default function SavedAddressesScreen() {
       return;
     }
 
+    setLoading(true);
     try {
       const addressData: Database['public']['Tables']['saved_addresses']['Insert'] = {
         user_id: user!.id,
@@ -123,11 +127,13 @@ export default function SavedAddressesScreen() {
       setCurrentCoordinates(null);
 
       if (editingAddress) {
+        console.log('Updating address:', editingAddress.id);
         const { error } = await savedAddressesTable()
           .update(addressData)
           .eq('id', editingAddress.id);
         if (error) throw error;
       } else {
+        console.log('Creating new address');
         const { error } = await savedAddressesTable()
           .insert(addressData);
         if (error) throw error;
@@ -140,7 +146,9 @@ export default function SavedAddressesScreen() {
       Alert.alert('Success', 'Address saved successfully');
     } catch (error) {
       console.error('Error saving address:', error);
-      Alert.alert('Error', 'Failed to save address');
+      Alert.alert('Error', `Failed to save address: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,22 +162,34 @@ export default function SavedAddressesScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            setLoading(true);
             try {
-              const { error } = await savedAddressesTable()
+              console.log('Deleting address:', address.id, 'for user:', user!.id);
+              
+              const { data, error } = await savedAddressesTable()
                 .delete()
                 .eq('id', address.id)
-                .eq('user_id', user!.id);
+                .eq('user_id', user!.id)
+                .select();
               
-              if (error) throw error;
+              console.log('Delete result:', { data, error });
+              
+              if (error) {
+                console.error('Delete error:', error);
+                throw error;
+              }
               
               // Update local state immediately for better UX
               setAddresses(prev => prev.filter(addr => addr.id !== address.id));
               
-              loadSavedAddresses();
               Alert.alert('Success', 'Address deleted successfully');
             } catch (error) {
               console.error('Error deleting address:', error);
-              Alert.alert('Error', 'Failed to delete address');
+              Alert.alert('Error', `Failed to delete address: ${error.message || 'Unknown error'}`);
+              // Reload addresses to revert UI changes if delete failed
+              loadSavedAddresses();
+            } finally {
+              setLoading(false);
             }
           },
         },
