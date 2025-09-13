@@ -91,7 +91,7 @@ export default function BookingsScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, [user, authLoading]);
+  }, [user, authLoading, loadRides]);
 
   // Combine active trip with history for display
   const allRides = activeRide ? [activeRide, ...rides.filter(r => r.id !== activeRide.id)] : rides;
