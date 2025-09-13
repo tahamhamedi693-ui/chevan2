@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Car, User, ArrowRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 
 interface DriverModeToggleProps {
   currentMode: 'passenger' | 'driver';
@@ -10,6 +10,8 @@ interface DriverModeToggleProps {
 }
 
 export default function DriverModeToggle({ currentMode, onModeChange }: DriverModeToggleProps) {
+  const routerInstance = useRouter();
+
   const handleSwitchToDriver = () => {
     Alert.alert(
       'Switch to Driver Mode',
@@ -20,7 +22,7 @@ export default function DriverModeToggle({ currentMode, onModeChange }: DriverMo
           text: 'Continue',
           onPress: () => {
             onModeChange('driver');
-            router.push('/(driver)/dashboard');
+            routerInstance.push('/(driver)/dashboard');
           },
         },
       ]
@@ -37,7 +39,7 @@ export default function DriverModeToggle({ currentMode, onModeChange }: DriverMo
           text: 'Continue',
           onPress: () => {
             onModeChange('passenger');
-            router.push('/(tabs)');
+            routerInstance.push('/(tabs)');
           },
         },
       ]
