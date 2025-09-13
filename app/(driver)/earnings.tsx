@@ -9,17 +9,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Calendar, 
-  Clock, 
-  Car,
-  ArrowLeft,
-  BarChart3,
-  Target,
-  Award
-} from 'lucide-react-native';
+import { DollarSign, TrendingUp, Calendar, Clock, Car, ArrowLeft, ChartBar as BarChart3, Target, Award } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 

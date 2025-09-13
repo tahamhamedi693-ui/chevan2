@@ -11,23 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ArrowLeft,
-  User,
-  Car,
-  Star,
-  Shield,
-  Bell,
-  Settings,
-  CreditCard,
-  FileText,
-  HelpCircle,
-  LogOut,
-  ChevronRight,
-  Edit,
-  Award,
-  MapPin
-} from 'lucide-react-native';
+import { ArrowLeft, User, Car, Star, Shield, Bell, Settings, CreditCard, FileText, CircleHelp as HelpCircle, LogOut, ChevronRight, CreditCard as Edit, Award, MapPin } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 
