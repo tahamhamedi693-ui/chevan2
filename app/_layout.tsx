@@ -9,16 +9,31 @@ import { useState } from 'react';
 
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_publishable_key_here';
 
-// Conditionally import StripeProvider only on native platforms
-const StripeProviderComponent = Platform.OS === 'web' 
-  ? ({ children }: { children: React.ReactNode }) => <>{children}</>
-  : require('@stripe/stripe-react-native').StripeProvider;
+// No-op component for web platform
+const NoOpProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 export default function RootLayout() {
   useFrameworkReady();
   const { user, loading } = useAuth();
   const [isNavigationReady, setIsNavigationReady] = useState(false);
+  const [StripeProviderComponent, setStripeProviderComponent] = useState<React.ComponentType<any> | null>(null);
   const navigationRef = useNavigationContainerRef();
+
+  // Dynamically import StripeProvider only on native platforms
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      setStripeProviderComponent(() => NoOpProvider);
+    } else {
+      import('@stripe/stripe-react-native')
+        .then((stripeModule) => {
+          setStripeProviderComponent(() => stripeModule.StripeProvider);
+        })
+        .catch(() => {
+          // Fallback to no-op if import fails
+          setStripeProviderComponent(() => NoOpProvider);
+        });
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = navigationRef.addListener('state', () => {
@@ -38,7 +53,7 @@ export default function RootLayout() {
     }
   }, [user, loading, isNavigationReady]);
 
-  if (loading) {
+  if (loading || !StripeProviderComponent) {
     return null;
   }
 
@@ -52,11 +67,6 @@ export default function RootLayout() {
       <StatusBar style="auto" />
     </>
   );
-
-  // Only use StripeProvider on native platforms
-  if (Platform.OS === 'web') {
-    return <AppContent />;
-  }
 
   return (
     <StripeProviderComponent publishableKey={STRIPE_PUBLISHABLE_KEY}>
