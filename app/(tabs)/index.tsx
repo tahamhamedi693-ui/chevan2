@@ -357,42 +357,6 @@ export default function HomeScreen() {
     return R * c;
   };
 
-  const handleLocationSelect = async (location: any) => {
-    if (searchType === 'destination') {
-      setDestination(location.address);
-      setDestinationCoords({
-        latitude: location.latitude,
-        longitude: location.longitude,
-      });
-      
-      // Calculate fares for all ride types
-      const fares: { [key: string]: number } = {};
-      for (const ride of rideTypes) {
-        try {
-          const estimate = await getRouteEstimate(
-          { latitude: currentCoords!.latitude, longitude: currentCoords!.longitude, address: currentLocation },
-          { latitude: location.latitude, longitude: location.longitude, address: location.address },
-          ride.id
-        );
-        fares[ride.id] = estimate.fare;
-        } catch (error) {
-          console.error('Error calculating fare for', ride.id, error);
-          // Fallback calculation based on distance
-          const distance = calculateEstimatedDistance();
-          const baseFares = { economy: 3.50, comfort: 5.25, luxury: 7.70 };
-          const perKmRates = { economy: 1.20, comfort: 1.68, luxury: 2.40 };
-          const baseFare = baseFares[ride.id as keyof typeof baseFares] || baseFares.economy;
-          const perKmRate = perKmRates[ride.id as keyof typeof perKmRates] || perKmRates.economy;
-          fares[ride.id] = Math.max(baseFare + (distance * perKmRate), baseFare * 1.5);
-        }
-      }
-      
-      setEstimatedFares(fares);
-      setShowRideSelection(true);
-    }
-    setShowLocationSearch(false);
-  };
-
   const handleRideComplete = (ride: any) => {
     if (activeRide) completeRide(activeRide.id);
     setCompletedRide(activeRide);
