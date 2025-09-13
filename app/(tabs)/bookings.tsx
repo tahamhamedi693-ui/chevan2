@@ -28,16 +28,21 @@ export default function BookingsScreen() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [fadeAnim] = useState(new Animated.Value(0));
   const { user, loading: authLoading } = useAuth();
-  const { rides, activeRide, cancelRide } = useRides();
+  const { rides, activeRide, cancelRide, loadRides } = useRides();
 
   useEffect(() => {
+    // Load rides when component mounts
+    if (user && !authLoading) {
+      loadRides();
+    }
+    
     // Entrance animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [user, authLoading, loadRides]);
 
   // Combine active trip with history for display
   const allRides = activeRide ? [activeRide, ...rides.filter(r => r.id !== activeRide.id)] : rides;
@@ -102,6 +107,7 @@ export default function BookingsScreen() {
   };
 
   const handleCancelRide = async (ride: Ride) => {
+    console.log('Attempting to cancel ride:', ride.id);
     Alert.alert(
       'Cancel Ride',
       'Are you sure you want to cancel this ride?',
@@ -112,9 +118,14 @@ export default function BookingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Canceling ride:', ride.id);
               await cancelRide(ride.id);
+              console.log('Ride cancelled successfully');
               Alert.alert('Ride Cancelled', 'Your ride has been cancelled successfully.');
+              // Reload rides to update the UI
+              await loadRides();
             } catch (error) {
+              console.error('Error canceling ride:', error);
               Alert.alert('Error', 'Failed to cancel ride. Please try again.');
             }
           },
@@ -285,7 +296,10 @@ export default function BookingsScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.actionButton, styles.secondaryActionButton]}
-                      onPress={() => handleCancelRide(ride)}
+                      onPress={() => {
+                        console.log('Cancel button pressed for ride:', ride.id);
+                        handleCancelRide(ride);
+                      }}
                     >
                       <Text style={[styles.actionButtonText, styles.secondaryActionButtonText]}>Cancel</Text>
                     </TouchableOpacity>

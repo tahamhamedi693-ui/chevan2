@@ -217,6 +217,7 @@ export class RideService {
 
   // Cancel a ride
   async cancelRide(rideId: string): Promise<void> {
+    console.log('RideService: Canceling ride', rideId);
     const { error } = await ridesTable()
       .update({ 
         status: 'cancelled',
@@ -224,7 +225,12 @@ export class RideService {
       })
       .eq('id', rideId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('RideService: Error canceling ride', error);
+      throw error;
+    }
+    
+    console.log('RideService: Ride cancelled successfully');
 
     // Free up the driver
     const { data: ride } = await ridesTable()
