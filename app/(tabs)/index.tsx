@@ -177,6 +177,7 @@ export default function HomeScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showScheduleRide, setShowScheduleRide] = useState(false);
   const [completedRide, setCompletedRide] = useState<any>(null);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(3);
   const { user } = useAuth();
   const {
     activeRide,
@@ -429,9 +430,9 @@ export default function HomeScreen() {
                   onPress={() => setShowNotifications(true)}
                 >
                   <Bell size={22} color={Colors.textPrimary} />
-                  {true && (
+                  {unreadNotificationsCount > 0 && (
                     <View style={styles.notificationBadge}>
-                      <Text style={styles.notificationBadgeText}>3</Text>
+                      <Text style={styles.notificationBadgeText}>{unreadNotificationsCount}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
