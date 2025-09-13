@@ -94,6 +94,11 @@ export default function BookingsScreen() {
     );
   };
 
+  const handleTrackRide = (ride: Ride) => {
+    setSelectedRide(ride);
+    setShowDetails(true);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -253,7 +258,7 @@ export default function BookingsScreen() {
                   <View style={styles.rideActions}>
                     <TouchableOpacity style={styles.actionButton}>
                       <Text style={styles.actionButtonText}>Track</Text>
-                    </TouchableOpacity>
+                     onPress={() => handleTrackRide(ride)}
                     <TouchableOpacity style={[styles.actionButton, styles.secondaryActionButton]}>
                       <Text style={[styles.actionButtonText, styles.secondaryActionButtonText]}>Cancel</Text>
                     </TouchableOpacity>

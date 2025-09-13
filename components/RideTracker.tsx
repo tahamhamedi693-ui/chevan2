@@ -4,6 +4,7 @@ import { MapPin, Clock, Car, Phone, MessageCircle, Star, Navigation, Shield, X, 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/lib/designSystem';
 import { Database } from '@/types/database';
+import MapView from './MapView';
 
 type Ride = Database['public']['Tables']['rides']['Row'];
 
@@ -17,6 +18,8 @@ interface RideTrackerProps {
 export default function RideTracker({ ride, onCancel, onContact, onEmergency }: RideTrackerProps) {
   const eta = ride.eta || 'Calculating...';
   const [progress] = useState(new Animated.Value(0));
+  const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [driverLocation, setDriverLocation] = useState<{latitude: number, longitude: number} | null>(null);
   
   useEffect(() => {
     // Animate progress bar for active rides
@@ -26,6 +29,23 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
         duration: 1500,
         useNativeDriver: false
       }).start();
+      
+      // Simulate real-time location updates
+      const locationInterval = setInterval(() => {
+        // Mock driver location updates
+        setDriverLocation({
+          latitude: 37.7749 + (Math.random() - 0.5) * 0.01,
+          longitude: -122.4194 + (Math.random() - 0.5) * 0.01
+        });
+        
+        // Mock current location (pickup to destination)
+        setCurrentLocation({
+          latitude: 37.7749 + (Math.random() - 0.5) * 0.005,
+          longitude: -122.4194 + (Math.random() - 0.5) * 0.005
+        });
+      }, 5000);
+      
+      return () => clearInterval(locationInterval);
     }
   }, [ride.status]);
 
@@ -70,6 +90,28 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
 
   return (
     <View style={styles.container}>
+      {/* Live Map View */}
+      {ride.status === 'active' && (
+        <View style={styles.mapSection}>
+          <MapView
+            currentLocation={currentLocation || undefined}
+            destination={{
+              latitude: 37.7849, // Mock destination coordinates
+              longitude: -122.4094
+            }}
+            driverLocation={driverLocation || undefined}
+            showRoute={true}
+            showNearbyDrivers={false}
+          />
+          <View style={styles.mapOverlay}>
+            <View style={styles.liveIndicator}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>Live tracking</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Status Header with Gradient */}
       <LinearGradient
         colors={getStatusGradient()}
@@ -265,23 +307,51 @@ export default function RideTracker({ ride, onCancel, onContact, onEmergency }: 
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    margin: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
   },
+  
+  // Map Section
+  mapSection: {
+    height: 300,
+    position: 'relative',
+    marginBottom: 20,
+  },
+  mapOverlay: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+  },
+  liveText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
   // Status Header
   statusHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderRadius: 12,
-    marginBottom: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
   statusContent: {
     flex: 1,
@@ -314,8 +384,9 @@ const styles = StyleSheet.create({
   
   // Progress Section
   progressSection: {
-    marginBottom: 20,
+    marginBottom: 16,
     paddingHorizontal: 4,
+    marginHorizontal: 16,
   },
   progressBar: {
     height: 6,
@@ -346,7 +417,8 @@ const styles = StyleSheet.create({
   
   // Driver Section
   driverSection: {
-    marginBottom: 20,
+    marginBottom: 16,
+    marginHorizontal: 16,
   },
   driverHeader: {
     flexDirection: 'row',
@@ -429,7 +501,8 @@ const styles = StyleSheet.create({
   
   // Route Section
   routeSection: {
-    marginBottom: 20,
+    marginBottom: 16,
+    marginHorizontal: 16,
   },
   routeCard: {
     backgroundColor: Colors.surfaceElevated,
@@ -489,7 +562,8 @@ const styles = StyleSheet.create({
   
   // Fare Section
   fareSection: {
-    marginBottom: 20,
+    marginBottom: 16,
+    marginHorizontal: 16,
   },
   fareCard: {
     backgroundColor: Colors.surfaceElevated,
@@ -538,6 +612,8 @@ const styles = StyleSheet.create({
   actionSection: {
     flexDirection: 'row',
     gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
   cancelButton: {
     flex: 1,
