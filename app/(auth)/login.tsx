@@ -50,21 +50,14 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        console.error('Login error:', error);
-        Alert.alert('Login Failed', error.message);
-      } else {
-        console.log('Login successful, redirecting...');
-        router.replace('/(tabs)');
-      }
-    } catch (error) {
-      console.error('Login exception:', error);
-      Alert.alert('Login Failed', 'An unexpected error occurred');
-    }
+    const { error } = await signIn(email, password);
     setLoading(false);
+
+    if (error) {
+      Alert.alert('Login Failed', error.message);
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   return (
@@ -140,7 +133,7 @@ export default function LoginScreen() {
 
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>Don't have an account? </Text>
-              <Link href="/(auth)/signup" asChild>
+              <Link href="/(auth)/user-type-selection" asChild>
                 <TouchableOpacity>
                   <Text style={styles.signupLink}>Sign Up</Text>
                 </TouchableOpacity>

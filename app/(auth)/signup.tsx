@@ -12,11 +12,15 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react-native';
+import { Link, router, useLocalSearchParams } from 'expo-router';
+import { Mail, Lock, User, Eye, EyeOff, Car, Users } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
+import { UserType } from '@/types/database';
 
 export default function SignupScreen() {
+  const params = useLocalSearchParams<{ userType?: UserType }>();
+  const userType = params.userType || 'passenger';
+  
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +47,7 @@ export default function SignupScreen() {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, userType as UserType);
     setLoading(false);
 
     if (error) {
@@ -66,8 +70,22 @@ export default function SignupScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
+            <View style={styles.userTypeIndicator}>
+              {userType === 'driver' ? (
+                <Car size={24} color="#3B82F6" />
+              ) : (
+                <Users size={24} color="#3B82F6" />
+              )}
+              <Text style={styles.userTypeText}>
+                Signing up as {userType === 'driver' ? 'Driver' : 'Passenger'}
+              </Text>
+            </View>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join us and start riding</Text>
+            <Text style={styles.subtitle}>
+              {userType === 'driver' 
+                ? 'Start earning by giving rides' 
+                : 'Join us and start riding'}
+            </Text>
           </View>
 
           <View style={styles.form}>
@@ -199,6 +217,21 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  userTypeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 16,
+    gap: 8,
+  },
+  userTypeText: {
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '600',
   },
   title: {
     fontSize: 32,

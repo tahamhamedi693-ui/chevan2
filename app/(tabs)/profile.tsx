@@ -11,7 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, CreditCard, MapPin, Bell, Shield, CircleHelp as HelpCircle, Settings, LogOut, ChevronRight, Star, Gift, Users, CreditCard as Edit, Car } from 'lucide-react-native';
+import { User, CreditCard, MapPin, Bell, Shield, CircleHelp as HelpCircle, Settings, LogOut, ChevronRight, Star, Gift, Users, CreditCard as Edit } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -68,8 +68,11 @@ export default function ProfileScreen() {
           user_id: user!.id,
           email: user!.email || 'user@example.com',
           full_name: user!.user_metadata?.full_name || 'John Doe',
+          phone: null,
           avatar_url: null,
-          role: 'user',
+          user_type: 'passenger',
+          rating: 5.0,
+          total_trips: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
@@ -83,8 +86,11 @@ export default function ProfileScreen() {
         user_id: user!.id,
         email: user!.email || 'user@example.com',
         full_name: 'John Doe',
+        phone: null,
         avatar_url: null,
-        role: 'user',
+        user_type: 'passenger',
+        rating: 5.0,
+        total_trips: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -95,30 +101,76 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     console.log('Logout button pressed');
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('User confirmed logout');
-            try {
-              await signOut();
-              console.log('SignOut completed');
-              // Force immediate navigation
-              router.replace('/(auth)/login');
-            } catch (error) {
-              console.error('Logout error:', error);
-              // Force navigation even on error
-              router.replace('/(auth)/login');
-            }
+    console.log('Showing confirmation alert...');
+    
+    // Try-catch around Alert to see if there's an issue
+    try {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out?',
+        [
+          { 
+            text: 'Cancel', 
+            style: 'cancel',
+            onPress: () => console.log('User cancelled logout')
           },
-        },
-      ]
-    );
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              await performLogout();
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    } catch (alertError) {
+      console.error('Alert error:', alertError);
+      // If Alert fails, perform logout directly
+      console.log('Alert failed, performing direct logout...');
+      await performLogout();
+    }
+  };
+
+  const performLogout = async () => {
+    console.log('User confirmed logout - starting sign out process');
+    try {
+      console.log('Calling signOut function...');
+      const result = await signOut();
+      console.log('SignOut completed successfully', result);
+      
+      // Small delay to ensure state updates propagate
+      console.log('Waiting before navigation...');
+      setTimeout(() => {
+        console.log('Attempting navigation to login page...');
+        // Use push first then replace to ensure navigation happens
+        router.push('/(auth)/login');
+        console.log('Pushed to login page');
+        setTimeout(() => {
+          console.log('Replacing with login page');
+          router.replace('/(auth)/login');
+        }, 100);
+      }, 100);
+    } catch (error) {
+      console.error('Logout error caught:', error);
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+      
+      // Still try to navigate on error
+      console.log('Error occurred, still attempting navigation...');
+      setTimeout(() => {
+        console.log('Navigating to login after error...');
+        router.push('/(auth)/login');
+        setTimeout(() => {
+          router.replace('/(auth)/login');
+        }, 100);
+      }, 100);
+    }
+  };
+
+  // Direct logout for testing - bypasses Alert
+  const handleDirectLogout = async () => {
+    console.log('Direct logout initiated (bypassing Alert)');
+    await performLogout();
   };
 
   const profileSettings: ProfileSetting[] = [
@@ -159,14 +211,6 @@ export default function ProfileScreen() {
   ];
 
   const menuItems: ProfileSetting[] = [
-    {
-      id: 'driver',
-      icon: Car,
-      label: 'Become a Driver',
-      value: 'Earn money driving',
-      onPress: () => router.push('/(driver)/apply'),
-      color: '#10B981',
-    },
     {
       id: 'referral',
       icon: Gift,
@@ -319,6 +363,15 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <LogOut size={20} color="#DC2626" />
             <Text style={styles.logoutText}>Sign Out</Text>
+          </TouchableOpacity>
+          
+          {/* Temporary Test Button - Remove after testing */}
+          <TouchableOpacity 
+            style={[styles.logoutButton, { backgroundColor: '#F3F4F6', marginTop: 10 }]} 
+            onPress={handleDirectLogout}
+          >
+            <LogOut size={20} color="#FF9800" />
+            <Text style={[styles.logoutText, { color: '#FF9800' }]}>Test Direct Logout (No Alert)</Text>
           </TouchableOpacity>
         </Animated.View>
 

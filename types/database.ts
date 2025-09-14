@@ -1,3 +1,5 @@
+export type UserType = 'passenger' | 'driver';
+
 export interface Database {
   public: {
     Tables: {
@@ -9,6 +11,7 @@ export interface Database {
           full_name: string | null;
           phone: string | null;
           avatar_url: string | null;
+          user_type: UserType;
           rating: number;
           total_trips: number;
           created_at: string;
@@ -21,6 +24,7 @@ export interface Database {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          user_type?: UserType;
           rating?: number;
           total_trips?: number;
           created_at?: string;
@@ -33,6 +37,7 @@ export interface Database {
           full_name?: string | null;
           phone?: string | null;
           avatar_url?: string | null;
+          user_type?: UserType;
           rating?: number;
           total_trips?: number;
           created_at?: string;

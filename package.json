@@ -7,7 +7,12 @@
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "start": "EXPO_NO_TELEMETRY=1 expo start --reset-cache",
     "build:web": "expo export --platform web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "build:android:preview": "eas build --platform android --profile preview",
+    "build:android:production": "eas build --platform android --profile production",
+    "build:android:local": "eas build --platform android --profile preview --local"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

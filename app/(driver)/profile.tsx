@@ -59,12 +59,28 @@ export default function DriverProfile() {
           onPress: async () => {
             try {
               console.log('Driver logout initiated');
-              await signOut();
-              console.log('Driver logout completed');
-              router.replace('/(auth)/login');
+              const result = await signOut();
+              console.log('Driver logout completed', result);
+              
+              // Small delay to ensure state updates propagate
+              setTimeout(() => {
+                // Use push first then replace to ensure navigation happens
+                router.push('/(auth)/login');
+                setTimeout(() => {
+                  router.replace('/(auth)/login');
+                }, 100);
+              }, 100);
             } catch (error) {
               console.error('Driver logout error:', error);
-              router.replace('/(auth)/login');
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+              
+              // Still try to navigate on error
+              setTimeout(() => {
+                router.push('/(auth)/login');
+                setTimeout(() => {
+                  router.replace('/(auth)/login');
+                }, 100);
+              }, 100);
             }
           },
         },
